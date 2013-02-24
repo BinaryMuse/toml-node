@@ -25,7 +25,8 @@ Yet To Come
 Known Bugs
 ----------
 
- * Doesn't produce error if overwriting a previously set key
+ * Doesn't produce errors when overwriting a previously set key
+ * Doesn't produce errors on mix array types
 
 Unknown Bugs
 ------------
