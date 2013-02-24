@@ -9,3 +9,6 @@ console.dir(result);
 
 console.log("\nOutput of result.owner.bio:");
 console.log(result.owner.bio);
+
+console.log("\nInspecting clients.data:");
+console.dir(result.clients.data);
