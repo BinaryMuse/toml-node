@@ -4,7 +4,7 @@
   "description": "TOML parser for Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/.bin/nodeunit test/test_*.js"
   },
   "repository": "git://github.com/BinaryMuse/toml-node.git",
   "keywords": [
@@ -12,5 +12,8 @@
     "parser"
   ],
   "author": "Brandon Tilley <brandon@brandontilley.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "nodeunit": "~0.7.4"
+  }
 }

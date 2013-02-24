@@ -22,17 +22,6 @@ Yet To Come
 
  * Streaming interface
 
-Known Bugs
-----------
-
- * Doesn't produce errors when overwriting a previously set key
- * Doesn't produce errors on mix array types
-
-Unknown Bugs
-------------
-
- * There's bound to be some. Report 'em, or better yet, fix 'em and submit a pull request!
-
 Hacking
 -------
 
@@ -40,4 +29,5 @@ toml-node uses the Jison parser generator.
 
     npm install -g jison
     jison toml.jison # generates toml.js
-    node test/test.js # basic smoke test against example.toml
+    node test/smoke.js # basic smoke test against example.toml
+    npm test # run all tests

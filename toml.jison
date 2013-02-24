@@ -55,7 +55,9 @@ identifier
     ;
 
 keygroup
-    : '[' keygroupid ']'  { parser.toml.currentGroup = $keygroupid; }
+    : '[' keygroupid ']'  {{
+      parser.toml.setCurrentGroup($keygroupid);
+    }}
     ;
 
 keygroupid
@@ -64,12 +66,20 @@ keygroupid
     ;
 
 value
-    : STR       { $$ = parseString($1) }
+    : string    { $$ = $1 }
     | float     { $$ = $1 }
     | integer   { $$ = $1 }
     | bool      { $$ = $1 }
-    | DATETIME  { $$ = new Date($1) }
+    | datetime  { $$ = $1 }
     | array     { $$ = $1 }
+    ;
+
+string
+    : STR { $$ = parseString($1) }
+    ;
+
+datetime
+    : DATETIME { $$ = new Date($1) }
     ;
 
 integer
@@ -83,12 +93,42 @@ float
     ;
 
 array
-    : '[' arrayelem ']' { $$ = $arrayelem }
+    : '[' strarray ']'      { $$ = $2 }
+    | '[' floatarray ']'    { $$ = $2 }
+    | '[' integerarray ']'  { $$ = $2 }
+    | '[' boolarray ']'     { $$ = $2 }
+    | '[' datetimearray ']' { $$ = $2 }
+    | '[' arrayarray ']'    { $$ = $2 }
     ;
 
-arrayelem
-    : value { $$ = [$1] }
-    | arrayelem ',' value { $arrayelem.push($value) }
+strarray
+    : string { $$ = [$1] }
+    | strarray ',' string { $1.push($3) }
+    ;
+
+floatarray
+    : float { $$ = [$1] }
+    | floatarray ',' float { $1.push($3) }
+    ;
+
+integerarray
+    : integer { $$ = [$1] }
+    | integerarray ',' integer { $1.push($3) }
+    ;
+
+boolarray
+    : bool { $$ = [$1] }
+    | boolarray ',' bool { $1.push($3) }
+    ;
+
+datetimearray
+    : datetime { $$ = [$1] }
+    | datetimearray ',' datetime { $1.push($3) }
+    ;
+
+arrayarray
+    : array { $$ = [$1] }
+    | arrayarray ',' array { $1.push($3) }
     ;
 
 bool
@@ -109,22 +149,29 @@ function parseString(str) {
   return str;
 }
 
-function deepSet(obj, path, value) {
+function deepValue(obj, path, value) {
   var tags = path.split("."), len = tags.length - 1;
   for (var i = 0; i < len; i++) {
     obj[tags[i]] = obj[tags[i]] || {};
     obj = obj[tags[i]];
   }
-  obj[tags[len]] = value;
+  if (value !== undefined)
+    obj[tags[len]] = value;
+  else
+    return obj[tags[len]]
 }
 
 parser.toml = {
   data: {},
   currentGroup: null,
+  setCurrentGroup: function(group) {
+    if (deepValue(this.data, group))
+      throw new Error("Cannot overrite previously set key " + group + " with keygroup");
+    this.currentGroup = group;
+  },
   set: function(key, value) {
-    if (this.currentGroup) {
-      key = this.currentGroup + "." + key;
-    }
-    deepSet(this.data, key, value);
+    if (this.currentGroup)
+      key = this.currentGroup + '.' + key;
+    deepValue(this.data, key, value);
   }
 };
