@@ -36,10 +36,17 @@ exports.testParsesExample = function(test) {
 
   fs.readFile(__dirname + "/example.toml", 'utf-8', function(err, str) {
     test.ifError(err);
-    var results = toml.parse(str);
-    test.deepEqual(results, expected);
+    test.deepEqual(toml.parse(str), expected);
     test.done();
   });
+};
+
+exports.testSupportsTrailingCommasInArrays = function(test) {
+  var str = 'arr = [1, 2, 3,]';
+  var expected = { arr: [1, 2, 3] };
+  var results = toml.parse(str);
+  test.deepEqual(results, expected);
+  test.done();
 };
 
 exports.testErrorOnKeyOverride = function(test) {

@@ -27,7 +27,7 @@ datetime      \d{4}"-"\d{2}"-"\d{2}"T"\d{2}":"\d{2}":"\d{2}"Z"
 %%
 
 file
-    : lines { return parser.toml.data; }
+    : lines { var data = parser.toml.data; parser.toml.data = {}; parser.toml.currentGroup = null; return data; }
     ;
 
 lines
@@ -104,31 +104,37 @@ array
 strarray
     : string { $$ = [$1] }
     | strarray ',' string { $1.push($3) }
+    | strarray ','
     ;
 
 floatarray
     : float { $$ = [$1] }
     | floatarray ',' float { $1.push($3) }
+    | floatarray ','
     ;
 
 integerarray
     : integer { $$ = [$1] }
     | integerarray ',' integer { $1.push($3) }
+    | integerarray ','
     ;
 
 boolarray
     : bool { $$ = [$1] }
     | boolarray ',' bool { $1.push($3) }
+    | boolarray ','
     ;
 
 datetimearray
     : datetime { $$ = [$1] }
     | datetimearray ',' datetime { $1.push($3) }
+    | datetimearray ','
     ;
 
 arrayarray
     : array { $$ = [$1] }
     | arrayarray ',' array { $1.push($3) }
+    | arrayarray ','
     ;
 
 bool
