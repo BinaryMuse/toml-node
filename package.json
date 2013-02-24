@@ -1,0 +1,16 @@
+{
+  "name": "toml",
+  "version": "0.0.0",
+  "description": "TOML parser for Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "keywords": [
+    "toml",
+    "parser"
+  ],
+  "author": "Brandon Tilley <brandon@brandontilley.com>",
+  "license": "MIT"
+}
