@@ -21,6 +21,11 @@ Say you have some awesome TOML in a variable called `someTomlString`. Maybe it c
     var data = toml.parse(someTomlString);
     console.dir(data);
 
+TOML Spec Support
+-----------------
+
+toml-node supports the TOML spec as specified by [mojombo/toml@4a6ed394](https://github.com/mojombo/toml/tree/4a6ed3944183e2a0307ad6022b7daf53fb9e7eb0)
+
 Yet To Come
 -----------
 
