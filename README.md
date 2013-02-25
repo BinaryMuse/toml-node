@@ -54,3 +54,8 @@ toml-node runs on Travis CI and is tested against:
  * Node 0.6
  * Node 0.8
  * Node 0.9
+
+License
+-------
+
+toml-node is licensed under the MIT license agreement. See the LICENSE file for more information.
