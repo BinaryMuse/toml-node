@@ -1,5 +1,5 @@
 var Stream = require('stream');
-var toml = require('./toml');
+var toml = require('./lib/toml');
 
 module.exports = {
   parse: function(input) {
