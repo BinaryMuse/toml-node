@@ -14,7 +14,15 @@ module.exports = {
 
     var parse = function() {
       try {
-        var str = Buffer.concat(buffers, bufLen);
+        var str = "";
+        if (Buffer.concat) {
+          str = Buffer.concat(buffers, bufLen);
+        } else { // Node 0.6
+          for(var i = 0; i < buffers.length; i++) {
+            console.log(buffers[i].toString())
+            str += buffers[i].toString();
+          }
+        }
         var results = toml.parse(str.toString());
         stream.emit('data', results);
       } catch(e) {
