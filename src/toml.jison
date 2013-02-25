@@ -8,6 +8,7 @@ datetime      \d{4}"-"\d{2}"-"\d{2}"T"\d{2}":"\d{2}":"\d{2}"Z"
 'true'                      return 'TRUE'
 'false'                     return 'FALSE'
 {datetime}                  return 'DATETIME'
+\"{3}(.|\n)*\"{3}           return 'TRIPLESTR'
 \"([^"\\]|\\.)*\"           return 'STR'
 '='                         return 'EQUALS'
 "#".*                       return 'COMMENT'
@@ -73,7 +74,8 @@ value
     ;
 
 string
-    : STR { $$ = parseString($1) }
+    : TRIPLESTR { $$ = parseTripleString($1) }
+    | STR { $$ = parseString($1) }
     ;
 
 datetime
@@ -151,6 +153,10 @@ function parseString(str) {
            .replace(/([^\\])\\"/g, "$1\"")
            .replace(/\\\\/g, "\\")
   return str;
+}
+
+function parseTripleString(str) {
+  return str.substr(3, str.length - 6);
 }
 
 function deepValue(obj, path, value) {

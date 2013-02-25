@@ -93,3 +93,13 @@ exports.testErrorOnArrayMismatch = function(test) {
   });
   test.done();
 };
+
+exports.testTripleQuotedString = function(test) {
+  var str = 'data = """\nThis is a triple "quoted" string.\n\tIt has newlines and tabs.\n"""';
+  var expected = {
+    data: "\nThis is a triple \"quoted\" string.\n\tIt has newlines and tabs.\n"
+  };
+  var results = toml.parse(str);
+  test.deepEqual(expected, results);
+  test.done();
+};
