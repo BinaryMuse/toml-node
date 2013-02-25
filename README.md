@@ -36,7 +36,7 @@ Building & Tests
 toml-node uses the Jison parser generator.
 
     npm install -g jison
-    jison toml.jison # generates toml.js
+    jison src/toml.jison -o lib/toml.js
     npm test
 
 toml-node runs on Travis CI and is tested against:
