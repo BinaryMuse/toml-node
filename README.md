@@ -15,6 +15,8 @@ toml-node is available via npm.
 Usage
 -----
 
+### Standalone
+
 Say you have some awesome TOML in a variable called `someTomlString`. Maybe it came from the web; maybe it came from a file; wherever it came from, it came asynchronously! Let's turn that sucker into a JavaScript object.
 
     var toml = require('toml');
@@ -26,10 +28,7 @@ TOML Spec Support
 
 toml-node supports the TOML spec as specified by [mojombo/toml@4a6ed394](https://github.com/mojombo/toml/tree/4a6ed3944183e2a0307ad6022b7daf53fb9e7eb0)
 
-Yet To Come
------------
-
- * Streaming interface
+The stream will emit an `error` event in the case of an error while parsing the TOML document.
 
 Building & Tests
 ----------------
