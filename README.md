@@ -23,12 +23,22 @@ Say you have some awesome TOML in a variable called `someTomlString`. Maybe it c
     var data = toml.parse(someTomlString);
     console.dir(data);
 
+### Streaming
+
+You can pipe a stream of TOML text into toml-node and it will emit a single `data` event with the parsed results once the stream is complete.
+
+    var toml = require('toml');
+    var fs = require('fs');
+    fs.createReadStream('tomlFile.toml').pipe(toml.createStream()).on('data', function(results) {
+      // `results` is your parsed TOML
+    });
+
+The stream will emit an `error` event in the case of an error while parsing the TOML document.
+
 TOML Spec Support
 -----------------
 
 toml-node supports the TOML spec as specified by [mojombo/toml@4a6ed394](https://github.com/mojombo/toml/tree/4a6ed3944183e2a0307ad6022b7daf53fb9e7eb0)
-
-The stream will emit an `error` event in the case of an error while parsing the TOML document.
 
 Building & Tests
 ----------------
