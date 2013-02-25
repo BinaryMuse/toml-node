@@ -27,7 +27,7 @@ datetime      \d{4}"-"\d{2}"-"\d{2}"T"\d{2}":"\d{2}":"\d{2}"Z"
 %%
 
 file
-    : lines { var data = parser.toml.data; parser.toml.data = {}; parser.toml.currentGroup = null; return data; }
+    : lines { return this.toml.data; }
     ;
 
 lines
@@ -47,7 +47,7 @@ comment
     ;
 
 assignment
-    : identifier EQUALS value { parser.toml.set($identifier, $value); }
+    : identifier EQUALS value { this.toml = set(this.toml, $identifier, $value); }
     ;
 
 identifier
@@ -55,9 +55,7 @@ identifier
     ;
 
 keygroup
-    : '[' keygroupid ']'  {{
-      parser.toml.setCurrentGroup($keygroupid);
-    }}
+    : '[' keygroupid ']'  { this.toml = setCurrentGroup(this.toml, $keygroupid); }
     ;
 
 keygroupid
@@ -66,12 +64,12 @@ keygroupid
     ;
 
 value
-    : string    { $$ = $1 }
-    | float     { $$ = $1 }
-    | integer   { $$ = $1 }
-    | bool      { $$ = $1 }
-    | datetime  { $$ = $1 }
-    | array     { $$ = $1 }
+    : string
+    | float
+    | integer
+    | bool
+    | datetime
+    | array
     ;
 
 string
@@ -167,9 +165,24 @@ function deepValue(obj, path, value) {
     return obj[tags[len]]
 }
 
-parser.toml = {
-  data: {},
-  currentGroup: null,
+function set(instance, key, value) {
+  instance = instance || new TomlInstance();
+  instance.set(key, value);
+  return instance;
+}
+
+function setCurrentGroup(instance, group) {
+  instance = instance || new TomlInstance();
+  instance.setCurrentGroup(group);
+  return instance;
+}
+
+function TomlInstance() {
+  this.data = {};
+  this.currentGroup = null;
+};
+
+TomlInstance.prototype = {
   setCurrentGroup: function(group) {
     if (deepValue(this.data, group))
       throw new Error("Cannot overrite previously set key " + group + " with keygroup");
@@ -179,5 +192,5 @@ parser.toml = {
     if (this.currentGroup)
       key = this.currentGroup + '.' + key;
     deepValue(this.data, key, value);
-  }
+  },
 };
