@@ -95,9 +95,10 @@ exports.testErrorOnArrayMismatch = function(test) {
 };
 
 exports.testTripleQuotedString = function(test) {
-  var str = 'data = """\nThis is a triple "quoted" string.\n\tIt has newlines and tabs.\n"""';
+  var str = 'stringA = """\nThis is a triple "quoted" string.\n\tIt has newlines and tabs.\n"""\nstringB = """\nSingle "quote" and double ""quote""\n"""';
   var expected = {
-    data: "\nThis is a triple \"quoted\" string.\n\tIt has newlines and tabs.\n"
+    stringA: '\nThis is a triple "quoted" string.\n\tIt has newlines and tabs.\n'
+  , stringB: '\nSingle "quote" and double ""quote""\n'
   };
   var results = toml.parse(str);
   test.deepEqual(expected, results);
