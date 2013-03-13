@@ -4,22 +4,22 @@ datetime      \d{4}"-"\d{2}"-"\d{2}"T"\d{2}":"\d{2}":"\d{2}"Z"
 
 %%
 
-\s+                         /* ignore whitespace */
-'true'                      return 'TRUE'
-'false'                     return 'FALSE'
-{datetime}                  return 'DATETIME'
-\"{3}(.|\n)*\"{3}           return 'TRIPLESTR'
-\"([^"\\]|\\.)*\"           return 'STR'
-'='                         return 'EQUALS'
-"#".*                       return 'COMMENT'
-[0-9]+"."[0-9]+             return 'FLOAT'
-[0-9]+                      return 'INTEGER'
-'-'                         return '-'
-'['                         return '['
-']'                         return ']'
-','                         return ','
-[^\"\s=\[\]]+               return 'IDENTIFIER'
-<<EOF>>                     return 'EOF'
+\s+                                    /* ignore whitespace */
+'true'                                 return 'TRUE'
+'false'                                return 'FALSE'
+{datetime}                             return 'DATETIME'
+\"{3}(?:\"{1,2}(?!\")|[^\"])*\"{3}     return 'TRIPLESTR'
+\"([^"\\]|\\.)*\"                      return 'STR'
+'='                                    return 'EQUALS'
+"#".*                                  return 'COMMENT'
+[0-9]+"."[0-9]+                        return 'FLOAT'
+[0-9]+                                 return 'INTEGER'
+'-'                                    return '-'
+'['                                    return '['
+']'                                    return ']'
+','                                    return ','
+[^\"\s=\[\]]+                          return 'IDENTIFIER'
+<<EOF>>                                return 'EOF'
 
 /lex
 
