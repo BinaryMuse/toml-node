@@ -1,0 +1,214 @@
+{
+  var data        = {};
+  var nodes       = [];
+  var currentPath = null;
+  var topLevelKeys = {};
+  var subgroupKeys = {};
+
+  // Add a node to the list; `key` is optional and only used in 'Set' types
+  function node(line, column, type, value, key) {
+    var node = { type: type, value: value, line: line, column: column };
+    if (key) node.key = key;
+    nodes.push(node);
+    return node;
+  };
+
+  // Collect array of nodes into `topLevelKeys` and `subgroupKeys` data
+  function collect() {
+    for(i in nodes) {
+      var node = nodes[i];
+      switch(node.type) {
+        case 'Set':
+          var value = node.value.value;
+          if (node.value.type == 'Array') value = processArray(value);
+          collectValue(node.line, node.column, node.key, value);
+          break;
+        case 'Group':
+          collectGroup(node.line, node.column, node.value);
+          break;
+      }
+    }
+  };
+
+  function collectValue(line, col, key, value) {
+    var obj = currentPath ? subgroupKeys[currentPath] : topLevelKeys;
+    var existing = obj[key];
+    if (existing !== undefined) {
+      var path = (currentPath ? currentPath + '.' + key : key);
+      genError(line, col, "cannot replace existing key at " + path);
+    } else {
+      obj[key] = value;
+    }
+  };
+
+  function collectGroup(line, col, keygroup) {
+    var existing = subgroupKeys[keygroup];
+    checkPrefixPath(line, col, keygroup);
+    if (existing !== undefined) {
+      genError(line, col, "cannot replace existing keygroup " + keygroup);
+    } else {
+      subgroupKeys[keygroup] = {};
+      currentPath = keygroup;
+    }
+  };
+
+  function checkPrefixPath(line, col, keygroup) {
+    var parts = keygroup.split('.');
+    var lastPart = parts.pop();
+    var prefix = parts.join('.');
+
+    var existing = subgroupKeys[prefix];
+    if (existing !== undefined) {
+      var subValue = existing[lastPart];
+      if (subValue !== undefined)
+        genError(line, col, "cannot replace existing key " + keygroup + " with keygroup");
+    }
+  };
+
+  // Expand collected values in `topLevelKeys` and `subgroupKeys` into `data`
+  function expand() {
+    collect();
+
+    var keys = Object.keys(topLevelKeys);
+    for (i in keys) {
+      var key = keys[i];
+      data[key] = topLevelKeys[key];
+    }
+
+    var keys = Object.keys(subgroupKeys);
+    for (i in keys) {
+      var key = keys[i];
+      var obj = subgroupKeys[key];
+      var subkeys = Object.keys(obj);
+      for (j in subkeys) {
+        var subkey = subkeys[j];
+        deepValue(key)[subkey] = obj[subkey];
+      };
+    }
+    return data;
+  };
+
+  function deepValue(path) {
+    var obj = data;
+    var parts = path.split('.');
+    for(i in parts) {
+      var part = parts[i];
+      obj[part] = obj[part] || {};
+      obj = obj[part];
+    }
+    return obj;
+  }
+
+  function processArray(array) {
+    // Ensure that all items in the array are of the same type
+    var firstType = null;
+    for(i in array) {
+      var node = array[i];
+      if (firstType == null) {
+        firstType = node.type;
+      } else {
+        if (node.type != firstType) {
+          var error = "Error: unexpected type " + node.type + " in array of type " + firstType +
+            " at line " + node.line + ", column " + node.column;
+          throw new Error(error);
+        }
+      }
+    }
+
+    // Recursively reduce array of nodes into array of the nodes' values
+    return array.map(function(elem) {
+      if (elem.type == 'Array') {
+        return processArray(elem.value);
+      } else {
+        return elem.value;
+      }
+    });
+  }
+
+  function genError(line, col, err) {
+    throw new Error("Error: " + err + " at line " + line + ", column " + col);
+  }
+}
+
+start
+  = line*                               { return expand(nodes) }
+
+line
+  = S* expr:expression S* comment* (NL+ / EOF)
+
+expression
+  = comment / subpath / assignment
+
+comment
+  = '#' (!(NL / EOF) .)*
+
+subpath
+  = '[' name:key ']'                    { return node(line, column, 'Group', name) }
+
+assignment
+  = key:key S* '=' S* value:value       { return node(line, column, 'Set', value, key) }
+
+key
+  = chars:(!S !NL !'[' !']' !'=' char:. { return char })+ { return chars.join('') }
+
+value
+  = string / datetime / float / integer / boolean / array
+
+string
+  = '"' chars:string_char* '"'          { return node(line, column, 'String', chars.join('')) }
+
+string_char
+  = ESCAPED / (!'"' !'\\' char:. { return char })
+
+float
+  =     digits:(DIGITS '.' DIGITS)      { return node(line, column, 'Float',      parseFloat(digits.join(''))) }
+  / '-' digits:(DIGITS '.' DIGITS)      { return node(line, column, 'Float', -1 * parseFloat(digits.join(''))) }
+
+integer
+  =     digits:DIGIT+ !'.'              { return node(line, column, 'Integer',      parseInt(digits.join(''), 10)) }
+  / '-' digits:DIGIT+ !'.'              { return node(line, column, 'Integer', -1 * parseInt(digits.join(''), 10)) }
+
+boolean
+  = 'true'                              { return node(line, column, 'Boolean', true)  }
+  / 'false'                             { return node(line, column, 'Boolean', false) }
+
+array
+  = '[' SS* values:array_value_list+ SS* ']'                 { return node(line, column, 'Array', values) }
+  / '[' SS* values:array_value_list+ SS* value:value SS* ']' { return node(line, column, 'Array', values.concat(value)) }
+
+array_value_list
+  = (value:value SS* ',' SS* { return value })
+
+datetime
+  = date:(
+      DIGIT DIGIT DIGIT DIGIT
+      '-'
+      DIGIT DIGIT
+      '-'
+      DIGIT DIGIT
+      'T'
+      DIGIT DIGIT
+      ':'
+      DIGIT DIGIT
+      ':'
+      DIGIT DIGIT
+      'Z'
+    )                                             { return node(line, column, 'Datetime', new Date(date.join(''))) }
+
+S                = [ \t]
+SS               = [ \t] / NL / comment
+NL               = "\n" / "\r" "\n"
+EOF              = !.
+HEX              = [0-9a-f]i
+DIGIT            = [0-9]
+DIGITS           = d:[0-9]+                       { return d.join('') }
+ESCAPED          = '\\"'                          { return '"'  }
+                 / '\\\\'                         { return '\\' }
+                 / '\\/'                          { return '/'  }
+                 / '\\b'                          { return '\b' }
+                 / '\\t'                          { return '\t' }
+                 / '\\n'                          { return '\n' }
+                 / '\\f'                          { return '\f' }
+                 / '\\r'                          { return '\r' }
+                 / ESCAPED_UNICODE
+ESCAPED_UNICODE  = "\\u" digits:(HEX HEX HEX HEX) { return String.fromCharCode(parseInt("0x" + digits.join(''))) }

@@ -14,6 +14,7 @@
   "author": "Brandon Tilley <brandon@brandontilley.com>",
   "license": "MIT",
   "devDependencies": {
-    "nodeunit": "~0.7.4"
+    "nodeunit": "~0.7.4",
+    "pegjs": "~0.7.0"
   }
 }
