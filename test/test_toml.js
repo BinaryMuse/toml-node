@@ -90,6 +90,14 @@ exports.textDefineOnSuperkey = function(test) {
   test.done();
 };
 
+exports.testWhitespace = function(test) {
+  var str = "a = 1\n  \n  b = 2  ";
+  test.deepEqual(toml.parse(str), {
+    a: 1, b: 2
+  });
+  test.done();
+};
+
 exports.testErrorOnKeygroupOverride = function(test) {
   test.throws(function() {
     var str = "[a]\nb = 1\n\n[a]\nc = 2";

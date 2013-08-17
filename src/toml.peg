@@ -135,6 +135,7 @@ start
 
 line
   = S* expr:expression S* comment* (NL+ / EOF)
+  / S+ (NL+ / EOF)
 
 expression
   = comment / subpath / assignment
