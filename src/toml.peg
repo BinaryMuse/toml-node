@@ -13,23 +13,24 @@
     return node;
   };
 
-  function resolve() {
+  // Collect array of nodes into `topLevelKeys` and `subgroupKeys` data
+  function collect() {
     for(i in nodes) {
       var node = nodes[i];
       switch(node.type) {
         case 'Set':
           var value = node.value.value;
           if (node.value.type == 'Array') value = processArray(value);
-          resolveValue(node.line, node.column, node.key, value);
+          collectValue(node.line, node.column, node.key, value);
           break;
         case 'Group':
-          resolveGroup(node.line, node.column, node.value);
+          collectGroup(node.line, node.column, node.value);
           break;
       }
     }
   };
 
-  function resolveValue(line, col, key, value) {
+  function collectValue(line, col, key, value) {
     var obj = currentPath ? subgroupKeys[currentPath] : topLevelKeys;
     var existing = obj[key];
     if (existing !== undefined) {
@@ -40,8 +41,9 @@
     }
   };
 
-  function resolveGroup(line, col, keygroup) {
+  function collectGroup(line, col, keygroup) {
     var existing = subgroupKeys[keygroup];
+    checkPrefixPath(line, col, keygroup);
     if (existing !== undefined) {
       genError(line, col, "cannot replace existing keygroup " + keygroup);
     } else {
@@ -50,8 +52,22 @@
     }
   };
 
-  function reduce() {
-    resolve();
+  function checkPrefixPath(line, col, keygroup) {
+    var parts = keygroup.split('.');
+    var lastPart = parts.pop();
+    var prefix = parts.join('.');
+
+    var existing = subgroupKeys[prefix];
+    if (existing !== undefined) {
+      var subValue = existing[lastPart];
+      if (subValue !== undefined)
+        genError(line, col, "cannot replace existing key " + keygroup + " with keygroup");
+    }
+  };
+
+  // Expand collected values in `topLevelKeys` and `subgroupKeys` into `data`
+  function expand() {
+    collect();
 
     var keys = Object.keys(topLevelKeys);
     for (i in keys) {
@@ -112,45 +128,10 @@
   function genError(line, col, err) {
     throw new Error("Error: " + err + " at line " + line + ", column " + col);
   }
-
-  // Reduce the nodes into a standard JavaScript object
-  // function reduceold() {
-  //   for(i in nodes) {
-  //     var node = nodes[i];
-  //     switch(node.type) {
-  //       case 'Set':
-  //         var value = node.value.value
-  //         if (node.value.type == 'Array') value = processArray(value);
-  //         if (pathRef[node.key] !== undefined) {
-  //           var path = (currentPath ? currentPath + '.' + node.key : node.key);
-  //           var error = "Error: cannot redefine key" + path +
-  //             " at line " + node.line + ", column " + node.column;
-  //           throw new Error(error);
-  //         } else {
-  //           pathRef[node.key] = value;
-  //         }
-  //         break;
-
-  //       case 'Group':
-  //         var existingValue =
-  //         if (definedPaths.indexOf(node.value) == -1) {
-  //           definedPaths.push(node.value);
-  //           currentPath = node.value;
-  //           pathRef = deepValue(currentPath);
-  //         } else {
-  //           var error = "Error: cannot redefine keygroup" + node.value +
-  //             " at line " + node.line + ", column " + node.column;
-  //           throw new Error(error);
-  //         }
-  //         break;
-  //     }
-  //   }
-  //   return data;
-  // }
 }
 
 start
-  = line*                               { return reduce(nodes) }
+  = line*                               { return expand(nodes) }
 
 line
   = S* expr:expression S* comment* (NL+ / EOF)

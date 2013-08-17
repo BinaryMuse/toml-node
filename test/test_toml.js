@@ -135,6 +135,14 @@ exports.testErrorOnKeyOverride = function(test) {
   test.done()
 };
 
+exports.testErrorOnKeyReplace = function(test) {
+  test.throws(function() {
+    var str = "[a]\nb = 1\nb = 2";
+    toml.parse(str);
+  });
+  test.done()
+};
+
 exports.testErrorOnArrayMismatch = function(test) {
   test.throws(function() {
     var str = 'data = [1, 2, "test"]'
