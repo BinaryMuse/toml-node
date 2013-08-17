@@ -43,6 +43,11 @@ fs.createReadStream('tomlFile.toml', 'utf8').pipe(concat(function(data) {
 
 Thanks [@ForbesLindesay](https://github.com/ForbesLindesay) for the suggestion.
 
+Live Demo
+---------
+
+[@ForbesLindesay](https://github.com/ForbesLindesay) is awesome enough to have a live web-based demo of toml-node running at http://demos.forbeslindesay.co.uk/toml/
+
 TOML Spec Support
 -----------------
 
