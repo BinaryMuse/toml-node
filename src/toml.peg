@@ -202,9 +202,6 @@ EOF              = !.
 HEX              = [0-9a-f]i
 DIGIT            = [0-9]
 DIGITS           = d:[0-9]+                       { return d.join('') }
-ARY_START        = '[' SS*
-ARY_END          = ']' SS*
-ARY_SEP          = SS* ',' SS*
 ESCAPED          = '\\"'                          { return '"'  }
                  / '\\\\'                         { return '\\' }
                  / '\\/'                          { return '/'  }
@@ -213,4 +210,5 @@ ESCAPED          = '\\"'                          { return '"'  }
                  / '\\n'                          { return '\n' }
                  / '\\f'                          { return '\f' }
                  / '\\r'                          { return '\r' }
+                 / ESCAPED_UNICODE
 ESCAPED_UNICODE  = "\\u" digits:(HEX HEX HEX HEX) { return String.fromCharCode(parseInt("0x" + digits.join(''))) }

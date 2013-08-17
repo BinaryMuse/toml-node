@@ -8,7 +8,7 @@ var codes = [
   "test = [\"one\", ]",
   "test = [[1, 2,], [true, false,],]",
   "[my.sub.path]\nkey = true\nother = -15.3\n[my.sub]\nkey=false",
-  "arry = [\"one\", \"two\",\"thr\nee\", \"\u03EA\"]",
+  "arry = [\"one\", \"two\",\"thr\nee\", \"\\u03EA\"]",
   fs.readFileSync(__dirname + '/example.toml', 'utf8'),
   fs.readFileSync(__dirname + '/hard_example.toml', 'utf8')
 ]
