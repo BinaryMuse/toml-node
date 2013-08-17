@@ -7,6 +7,8 @@ TOML Parser for Node.js
 
 If you haven't heard of TOML, well you're just missing out. [Go check it out now.](https://github.com/mojombo/toml) Back? Good.
 
+You can see a live demo of this library at http://demos.forbeslindesay.co.uk/toml/
+
 Installation
 ------------
 
