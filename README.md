@@ -38,22 +38,23 @@ The stream will emit an `error` event in the case of an error while parsing the 
 TOML Spec Support
 -----------------
 
-toml-node supports the TOML spec as specified by [mojombo/toml@4a6ed394](https://github.com/mojombo/toml/tree/4a6ed3944183e2a0307ad6022b7daf53fb9e7eb0)
+toml-node supports the TOML spec as specified by [mojombo/toml@v0.1.0](https://github.com/mojombo/toml/tree/v0.1.0)
 
 Building & Tests
 ----------------
 
-toml-node uses the Jison parser generator.
+toml-node uses [the PEG.js parser generator](http://pegjs.majda.cz/).
 
-    npm install -g jison
-    jison src/toml.jison -o lib/toml.js
+    npm install
+    ./generate.sh
     npm test
 
 toml-node runs on Travis CI and is tested against:
 
  * Node 0.6
  * Node 0.8
- * Node 0.9
+ * Node 0.10
+ * Node 0.11
 
 License
 -------
