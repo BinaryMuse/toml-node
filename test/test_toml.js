@@ -76,35 +76,6 @@ exports.testSupportsTrailingCommasInArrays = function(test) {
   test.done();
 };
 
-exports.testStreamingInterface = function(test) {
-  var inStream = fs.createReadStream(__dirname + '/example.toml');
-  var outStream = inStream.pipe(toml.createStream());
-  var results = null;
-  var dataCount = 0;
-  outStream.on('data', function(parsed) {
-    results = parsed;
-    dataCount++;
-  });
-  outStream.on('end', function() {
-    test.deepEqual(exampleExpected, results);
-    test.equal(dataCount, 1);
-    test.done();
-  });
-};
-
-exports.testErrorsInStreamingInterface = function(test) {
-  var inStream = fs.createReadStream(__dirname + '/bad.toml');
-  var outStream = inStream.pipe(toml.createStream());
-  var results = null;
-  var dataCount = 0;
-  outStream.on('data', function() {
-    throw new Error("Unexpected error event");
-  });
-  outStream.on('error', function() {
-    test.done();
-  });
-};
-
 exports.textDefineOnSuperkey = function(test) {
   var str = "[a.b]\nc = 1\n\n[a]\nd = 2";
   var expected = {

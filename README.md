@@ -19,29 +19,35 @@ Usage
 
 Say you have some awesome TOML in a variable called `someTomlString`. Maybe it came from the web; maybe it came from a file; wherever it came from, it came asynchronously! Let's turn that sucker into a JavaScript object.
 
-    var toml = require('toml');
-    var data = toml.parse(someTomlString);
-    console.dir(data);
+```javascript
+var toml = require('toml');
+var data = toml.parse(someTomlString);
+console.dir(data);
+```
 
 ### Streaming
 
-You can pipe a stream of TOML text into toml-node and it will emit a single `data` event with the parsed results once the stream is complete.
+As of toml-node version 1.0, the streaming interface has been removed. Instead, use a module like [concat-stream](https://npmjs.org/package/concat-stream):
 
-    var toml = require('toml');
-    var fs = require('fs');
-    fs.createReadStream('tomlFile.toml').pipe(toml.createStream()).on('data', function(results) {
-      // `results` is your parsed TOML
-    });
+```javascript
+var toml = require('toml');
+var concat = require('concat-stream');
+var fs = require('fs');
 
-The stream will emit an `error` event in the case of an error while parsing the TOML document.
+fs.createReadStream('tomlFile.toml', 'utf8').pipe(concat(function(data) {
+  var parsed = toml.parse(data);
+}));
+```
+
+Thanks [@ForbesLindesay](https://github.com/ForbesLindesay) for the suggestion.
 
 TOML Spec Support
 -----------------
 
 toml-node supports the TOML spec as specified by [mojombo/toml@v0.1.0](https://github.com/mojombo/toml/tree/v0.1.0)
 
-Building & Tests
-----------------
+Building & Testing
+------------------
 
 toml-node uses [the PEG.js parser generator](http://pegjs.majda.cz/).
 
@@ -49,7 +55,9 @@ toml-node uses [the PEG.js parser generator](http://pegjs.majda.cz/).
     ./generate.sh
     npm test
 
-toml-node runs on Travis CI and is tested against:
+Any changes to `src/toml.peg` requires a regeneration of the parser with `./generate.sh`.
+
+toml-node is tested on Travis CI and is tested against:
 
  * Node 0.6
  * Node 0.8
