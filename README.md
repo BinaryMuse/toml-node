@@ -3,6 +3,8 @@ TOML Parser for Node.js
 
 [![Build Status](https://travis-ci.org/BinaryMuse/toml-node.png?branch=master)](https://travis-ci.org/BinaryMuse/toml-node)
 
+[![NPM](https://nodei.co/npm/toml.png?downloads=true)](https://nodei.co/npm/toml/)
+
 If you haven't heard of TOML, well you're just missing out. [Go check it out now.](https://github.com/mojombo/toml) Back? Good.
 
 Instalation
