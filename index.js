@@ -1,4 +1,3 @@
-var Stream = require('stream');
 var toml = require('./lib/toml');
 
 module.exports = {
