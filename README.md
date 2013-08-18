@@ -27,6 +27,16 @@ var data = toml.parse(someTomlString);
 console.dir(data);
 ```
 
+`toml.parse` throws an exception in the case of a parsing error; such exceptions have a `line` and `column` property on them to help identify the offending text.
+
+```javascript
+try {
+  toml.parse(someCrazyKnuckleHeadedTrblToml);
+} catch (e) {
+  console.error("Parsing error on line " + e.line + ", column " + e.column + ": " + e.message);
+}
+```
+
 ### Streaming
 
 As of toml-node version 1.0, the streaming interface has been removed. Instead, use a module like [concat-stream](https://npmjs.org/package/concat-stream):
