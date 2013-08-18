@@ -1,5 +1,5 @@
 var fs = require('fs');
-var parser = require('../lib/toml');
+var parser = require('../index');
 
 var codes = [
   "# test\n my.key=\"value\"\nother = 101\nthird = -37",
