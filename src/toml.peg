@@ -175,12 +175,15 @@ boolean
   / 'false'                             { return node(line, column, 'Boolean', false) }
 
 array
-  = '[' SS* value:value SS* ']'                              { return node(line, column, 'Array', [value]) }
-  / '[' SS* values:array_value_list+ SS* ']'                 { return node(line, column, 'Array', values) }
-  / '[' SS* values:array_value_list+ SS* value:value SS* ']' { return node(line, column, 'Array', values.concat(value)) }
+  = '[' value:array_value? ']'                         { return node(line, column, 'Array', value ? [value] : []) }
+  / '[' values:array_value_list+ ']'                   { return node(line, column, 'Array', values) }
+  / '[' values:array_value_list+ value:array_value ']' { return node(line, column, 'Array', values.concat(value)) }
+
+array_value
+  = SS* value:value SS*                 { return value }
 
 array_value_list
-  = (value:value SS* ',' SS* { return value })
+  = SS * value:value SS* ',' SS*        { return value }
 
 datetime
   = date:(
@@ -196,7 +199,7 @@ datetime
       ':'
       DIGIT DIGIT
       'Z'
-    )                                             { return node(line, column, 'Datetime', new Date(date.join(''))) }
+    )            { return node(line, column, 'Datetime', new Date(date.join(''))) }
 
 S                = [ \t]
 SS               = [ \t] / NL / comment
@@ -204,14 +207,14 @@ NL               = "\n" / "\r" "\n"
 EOF              = !.
 HEX              = [0-9a-f]i
 DIGIT            = [0-9]
-DIGITS           = d:[0-9]+                       { return d.join('') }
-ESCAPED          = '\\"'                          { return '"'  }
-                 / '\\\\'                         { return '\\' }
-                 / '\\/'                          { return '/'  }
-                 / '\\b'                          { return '\b' }
-                 / '\\t'                          { return '\t' }
-                 / '\\n'                          { return '\n' }
-                 / '\\f'                          { return '\f' }
-                 / '\\r'                          { return '\r' }
+DIGITS           = d:[0-9]+             { return d.join('') }
+ESCAPED          = '\\"'                { return '"'  }
+                 / '\\\\'               { return '\\' }
+                 / '\\/'                { return '/'  }
+                 / '\\b'                { return '\b' }
+                 / '\\t'                { return '\t' }
+                 / '\\n'                { return '\n' }
+                 / '\\f'                { return '\f' }
+                 / '\\r'                { return '\r' }
                  / ESCAPED_UNICODE
 ESCAPED_UNICODE  = "\\u" digits:(HEX HEX HEX HEX) { return String.fromCharCode(parseInt("0x" + digits.join(''))) }

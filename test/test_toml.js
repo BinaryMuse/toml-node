@@ -76,6 +76,22 @@ exports.testSupportsTrailingCommasInArrays = function(test) {
   test.done();
 };
 
+exports.testSingleElementArrayWithNoTrailingComma = function(test) {
+  var str = "a = [1]";
+  test.deepEqual(toml.parse(str), {
+    a: [1]
+  });
+  test.done();
+};
+
+exports.testEmptyArray = function(test) {
+  var str = "a = []";
+  test.deepEqual(toml.parse(str), {
+    a: []
+  });
+  test.done();
+};
+
 exports.textDefineOnSuperkey = function(test) {
   var str = "[a.b]\nc = 1\n\n[a]\nd = 2";
   var expected = {
@@ -94,14 +110,6 @@ exports.testWhitespace = function(test) {
   var str = "a = 1\n  \n  b = 2  ";
   test.deepEqual(toml.parse(str), {
     a: 1, b: 2
-  });
-  test.done();
-};
-
-exports.testSingleElementArrayWithNoTrailingComma = function(test) {
-  var str = "a = [1]";
-  test.deepEqual(toml.parse(str), {
-    a: [1]
   });
   test.done();
 };
