@@ -174,7 +174,8 @@ boolean
   / 'false'                             { return node(line, column, 'Boolean', false) }
 
 array
-  = '[' SS* values:array_value_list+ SS* ']'                 { return node(line, column, 'Array', values) }
+  = '[' SS* value:value SS* ']'                              { return node(line, column, 'Array', [value]) }
+  / '[' SS* values:array_value_list+ SS* ']'                 { return node(line, column, 'Array', values) }
   / '[' SS* values:array_value_list+ SS* value:value SS* ']' { return node(line, column, 'Array', values.concat(value)) }
 
 array_value_list
