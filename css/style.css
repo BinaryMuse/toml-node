@@ -1,0 +1,39 @@
+body {
+  padding-bottom: 50px;
+  background-color: #DCDDD8;
+  color: #354B5E;
+  font-family: 'Fauna One', serif;
+}
+
+h1, h2 {
+  font-family: 'Roboto', sans-serif;
+  color: #D74B4B
+}
+
+h2 {
+  font-size: 2em;
+}
+
+.row {
+  width: 100%;
+}
+
+textarea {
+  padding: 10px;
+  width: 100%;
+  font-family: monospace;
+  font-size: 120%;
+  overflow-x: scroll;
+  white-space: pre;
+  word-wrap: normal;
+  min-height: 300px;
+}
+
+.error {
+  color: red;
+  font-family: monospace;
+  font-size: 140%;
+}
+
+a {
+}
