@@ -46,7 +46,7 @@ Thanks [@ForbesLindesay](https://github.com/ForbesLindesay) for the suggestion.
 Live Demo
 ---------
 
-[@ForbesLindesay](https://github.com/ForbesLindesay) is awesome enough to have a live web-based demo of toml-node running at http://demos.forbeslindesay.co.uk/toml/
+You can experiment with TOML online at http://binarymuse.github.io/toml-node/, which uses the latest version of this library.
 
 TOML Spec Support
 -----------------
