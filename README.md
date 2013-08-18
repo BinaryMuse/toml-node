@@ -33,7 +33,8 @@ console.dir(data);
 try {
   toml.parse(someCrazyKnuckleHeadedTrblToml);
 } catch (e) {
-  console.error("Parsing error on line " + e.line + ", column " + e.column + ": " + e.message);
+  console.error("Parsing error on line " + e.line + ", column " + e.column +
+    ": " + e.message);
 }
 ```
 
@@ -61,7 +62,7 @@ You can experiment with TOML online at http://binarymuse.github.io/toml-node/, w
 TOML Spec Support
 -----------------
 
-toml-node supports the TOML spec as specified by [mojombo/toml@v0.1.0](https://github.com/mojombo/toml/tree/v0.1.0)
+toml-node supports version 0.1.0 the TOML spec as specified by [mojombo/toml@v0.1.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.1.0.md)
 
 Building & Testing
 ------------------
