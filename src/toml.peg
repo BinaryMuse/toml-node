@@ -64,7 +64,7 @@ array_value_list
   = array_sep* value:value array_sep* ',' array_sep*   { return value }
 
 array_sep
-  = [ \t] / NL / comment
+  = S / NL / comment
 
 datetime
   = date:(
