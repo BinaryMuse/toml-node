@@ -29,7 +29,7 @@ assignment
   = key:key S* '=' S* value:value       { return node(line, column, 'Set', value, key) }
 
 key
-  = chars:(!S !NL !'[' !']' !'=' char:. { return char })+ { return chars.join('') }
+  = chars:(!(S / NL / '[' / ']' / '=') char:. { return char })+ { return chars.join('') }
 
 value
   = string / datetime / float / integer / boolean / array
@@ -58,10 +58,13 @@ array
   / '[' values:array_value_list+ value:array_value ']' { return node(line, column, 'Array', values.concat(value)) }
 
 array_value
-  = SS* value:value SS*                 { return value }
+  = array_sep* value:value array_sep*                  { return value }
 
 array_value_list
-  = SS * value:value SS* ',' SS*        { return value }
+  = array_sep* value:value array_sep* ',' array_sep*   { return value }
+
+array_sep
+  = [ \t] / NL / comment
 
 datetime
   = date:(
@@ -80,7 +83,6 @@ datetime
     )            { return node(line, column, 'Datetime', new Date(date.join(''))) }
 
 S                = [ \t]
-SS               = [ \t] / NL / comment
 NL               = "\n" / "\r" "\n"
 EOF              = !.
 HEX              = [0-9a-f]i
