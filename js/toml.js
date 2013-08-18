@@ -1375,16 +1375,7 @@ module.exports = (function(){
             result2 = parse_SS();
           }
           if (result1 !== null) {
-            result3 = parse_array_value_list();
-            if (result3 !== null) {
-              result2 = [];
-              while (result3 !== null) {
-                result2.push(result3);
-                result3 = parse_array_value_list();
-              }
-            } else {
-              result2 = null;
-            }
+            result2 = parse_value();
             if (result2 !== null) {
               result3 = [];
               result4 = parse_SS();
@@ -1425,7 +1416,7 @@ module.exports = (function(){
           pos = clone(pos1);
         }
         if (result0 !== null) {
-          result0 = (function(offset, line, column, values) { return node(line, column, 'Array', values) })(pos0.offset, pos0.line, pos0.column, result0[2]);
+          result0 = (function(offset, line, column, value) { return node(line, column, 'Array', [value]) })(pos0.offset, pos0.line, pos0.column, result0[2]);
         }
         if (result0 === null) {
           pos = clone(pos0);
@@ -1468,26 +1459,105 @@ module.exports = (function(){
                   result4 = parse_SS();
                 }
                 if (result3 !== null) {
-                  result4 = parse_value();
-                  if (result4 !== null) {
-                    result5 = [];
-                    result6 = parse_SS();
-                    while (result6 !== null) {
-                      result5.push(result6);
-                      result6 = parse_SS();
+                  if (input.charCodeAt(pos.offset) === 93) {
+                    result4 = "]";
+                    advance(pos, 1);
+                  } else {
+                    result4 = null;
+                    if (reportFailures === 0) {
+                      matchFailed("\"]\"");
                     }
-                    if (result5 !== null) {
-                      if (input.charCodeAt(pos.offset) === 93) {
-                        result6 = "]";
-                        advance(pos, 1);
-                      } else {
-                        result6 = null;
-                        if (reportFailures === 0) {
-                          matchFailed("\"]\"");
-                        }
+                  }
+                  if (result4 !== null) {
+                    result0 = [result0, result1, result2, result3, result4];
+                  } else {
+                    result0 = null;
+                    pos = clone(pos1);
+                  }
+                } else {
+                  result0 = null;
+                  pos = clone(pos1);
+                }
+              } else {
+                result0 = null;
+                pos = clone(pos1);
+              }
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+          if (result0 !== null) {
+            result0 = (function(offset, line, column, values) { return node(line, column, 'Array', values) })(pos0.offset, pos0.line, pos0.column, result0[2]);
+          }
+          if (result0 === null) {
+            pos = clone(pos0);
+          }
+          if (result0 === null) {
+            pos0 = clone(pos);
+            pos1 = clone(pos);
+            if (input.charCodeAt(pos.offset) === 91) {
+              result0 = "[";
+              advance(pos, 1);
+            } else {
+              result0 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"[\"");
+              }
+            }
+            if (result0 !== null) {
+              result1 = [];
+              result2 = parse_SS();
+              while (result2 !== null) {
+                result1.push(result2);
+                result2 = parse_SS();
+              }
+              if (result1 !== null) {
+                result3 = parse_array_value_list();
+                if (result3 !== null) {
+                  result2 = [];
+                  while (result3 !== null) {
+                    result2.push(result3);
+                    result3 = parse_array_value_list();
+                  }
+                } else {
+                  result2 = null;
+                }
+                if (result2 !== null) {
+                  result3 = [];
+                  result4 = parse_SS();
+                  while (result4 !== null) {
+                    result3.push(result4);
+                    result4 = parse_SS();
+                  }
+                  if (result3 !== null) {
+                    result4 = parse_value();
+                    if (result4 !== null) {
+                      result5 = [];
+                      result6 = parse_SS();
+                      while (result6 !== null) {
+                        result5.push(result6);
+                        result6 = parse_SS();
                       }
-                      if (result6 !== null) {
-                        result0 = [result0, result1, result2, result3, result4, result5, result6];
+                      if (result5 !== null) {
+                        if (input.charCodeAt(pos.offset) === 93) {
+                          result6 = "]";
+                          advance(pos, 1);
+                        } else {
+                          result6 = null;
+                          if (reportFailures === 0) {
+                            matchFailed("\"]\"");
+                          }
+                        }
+                        if (result6 !== null) {
+                          result0 = [result0, result1, result2, result3, result4, result5, result6];
+                        } else {
+                          result0 = null;
+                          pos = clone(pos1);
+                        }
                       } else {
                         result0 = null;
                         pos = clone(pos1);
@@ -1512,15 +1582,12 @@ module.exports = (function(){
               result0 = null;
               pos = clone(pos1);
             }
-          } else {
-            result0 = null;
-            pos = clone(pos1);
-          }
-          if (result0 !== null) {
-            result0 = (function(offset, line, column, values, value) { return node(line, column, 'Array', values.concat(value)) })(pos0.offset, pos0.line, pos0.column, result0[2], result0[4]);
-          }
-          if (result0 === null) {
-            pos = clone(pos0);
+            if (result0 !== null) {
+              result0 = (function(offset, line, column, values, value) { return node(line, column, 'Array', values.concat(value)) })(pos0.offset, pos0.line, pos0.column, result0[2], result0[4]);
+            }
+            if (result0 === null) {
+              pos = clone(pos0);
+            }
           }
         }
         
@@ -2350,7 +2417,7 @@ module.exports = (function(){
           var existing = obj[key];
           if (existing !== undefined) {
             var path = (currentPath ? currentPath + '.' + key : key);
-            genError(line, col, "cannot replace existing key at " + path);
+            genError(line, col, "Cannot replace existing key " + path + ".");
           } else {
             obj[key] = value;
           }
@@ -2360,7 +2427,7 @@ module.exports = (function(){
           var existing = subgroupKeys[keygroup];
           checkPrefixPath(line, col, keygroup);
           if (existing !== undefined) {
-            genError(line, col, "cannot replace existing keygroup " + keygroup);
+            genError(line, col, "Cannot replace existing keygroup " + keygroup + ".");
           } else {
             subgroupKeys[keygroup] = {};
             currentPath = keygroup;
@@ -2376,7 +2443,7 @@ module.exports = (function(){
           if (existing !== undefined) {
             var subValue = existing[lastPart];
             if (subValue !== undefined)
-              genError(line, col, "cannot replace existing key " + keygroup + " with keygroup");
+              genError(line, col, "Cannot replace existing key " + keygroup + " with keygroup.");
           }
         };
       
@@ -2423,9 +2490,7 @@ module.exports = (function(){
               firstType = node.type;
             } else {
               if (node.type != firstType) {
-                var error = "Error: unexpected type " + node.type + " in array of type " + firstType +
-                  " at line " + node.line + ", column " + node.column;
-                throw new Error(error);
+                genError(node.line, node.column, "Expected type " + firstType + " but " + node.type + " found.");
               }
             }
           }
@@ -2441,7 +2506,10 @@ module.exports = (function(){
         }
       
         function genError(line, col, err) {
-          throw new Error("Error: " + err + " at line " + line + ", column " + col);
+          var ex = new Error(err);
+          ex.line = line;
+          ex.column = col;
+          throw ex;
         }
       
       
