@@ -108,7 +108,7 @@
         firstType = node.type;
       } else {
         if (node.type != firstType) {
-          genError(node.line, node.column, "Expected type " + firstType + " but " + node.type + "found.");
+          genError(node.line, node.column, "Expected type " + firstType + " but " + node.type + " found.");
         }
       }
     }
