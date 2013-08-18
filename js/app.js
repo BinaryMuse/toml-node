@@ -44,7 +44,10 @@ app.controller('DemoController', function($scope, tomlDemoString) {
     try {
       $scope.parsed = JSON.stringify(toml.parse($scope.original), null, "  ");
     } catch (exc) {
-      $scope.parsed = "Syntax error at line " + exc.line + ", column " + exc.column;
+      if (exc.line && exc.column)
+        $scope.parsed = "Error at line " + exc.line + " column " + exc.column + ":\n" + exc.message
+      else
+        $scope.parsed = exc.message;
     }
   };
 
