@@ -1,7 +1,9 @@
-var toml = require('./lib/toml');
+var parser = require('./lib/parser');
+var compiler = require('./lib/compiler');
 
 module.exports = {
   parse: function(input) {
-    return toml.parse(input.toString());
+    var nodes = parser.parse(input.toString());
+    return compiler.compile(nodes);
   }
 };
