@@ -70,6 +70,8 @@ function compile(nodes) {
     var line = node.line;
     var column = node.column;
 
+    checkPath(path, line, column);
+
     if (assignedPaths.indexOf(path) > -1) {
       genError("Cannot redefine existing key '" + path + "'.", line, column);
     }
@@ -82,6 +84,8 @@ function compile(nodes) {
     var path = node.value;
     var line = node.line;
     var column = node.column;
+
+    checkPath(path, line, column);
 
     if (assignedPaths.indexOf(path) === -1) assignedPaths.push(path);
     assignedPaths.push(path);
@@ -147,6 +151,13 @@ function compile(nodes) {
         return elem.value;
       }
     });
+  }
+
+  function checkPath(path, line, column) {
+    if (path[0] === '.')
+      genError("Cannot start a table key with '.'.", line, column)
+    else if (path[path.length - 1] === '.')
+      genError("Cannot end a table key with '.'.", line, column)
   }
 };
 
