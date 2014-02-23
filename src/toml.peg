@@ -3,11 +3,10 @@
 
   function addNode(node) {
     nodes.push(node);
-    return node;
   }
 
   function node(type, value, line, column, key) {
-    var obj = { type: type, value: value, line: line, column: column };
+    var obj = { type: type, value: value, line: line(), column: column() };
     if (key) obj.key = key;
     return obj;
   }
@@ -27,13 +26,13 @@ comment
   = '#' (!(NL / EOF) .)*
 
 path
-  = '[' name:key ']'                    { return addNode(node('ObjectPath', name, line, column)) }
+  = '[' name:key ']'                    { addNode(node('ObjectPath', name, line, column)) }
 
 tablearray
-  = '[' '[' name:key ']' ']'            { return addNode(node('ArrayPath', name, line, column)) }
+  = '[' '[' name:key ']' ']'            { addNode(node('ArrayPath', name, line, column)) }
 
 assignment
-  = key:key S* '=' S* value:value       { return addNode(node('Assign', value, line, column, key)) }
+  = key:key S* '=' S* value:value       { addNode(node('Assign', value, line, column, key)) }
 
 key
   = chars:(!(S / NL / '[' / ']' / '=') char:. { return char })+ { return chars.join('') }

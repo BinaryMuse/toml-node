@@ -200,3 +200,13 @@ exports.textErrorOnBadInputs = function(test) {
   }
   test.done();
 };
+
+exports.testErrorsHaveCorrectLineAndColumn = function(test) {
+  var str = "[a]\nb = 1\n [a.b]\nc = 2";
+  try { toml.parse(str); }
+  catch (e) {
+    test.equal(e.line, 3);
+    test.equal(e.column, 2);
+    test.done();
+  }
+};
