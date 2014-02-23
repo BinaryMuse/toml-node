@@ -71,7 +71,7 @@ function compile(nodes) {
     var column = node.column;
 
     if (assignedPaths.indexOf(path) > -1) {
-      genError("Cannot redefine existing table '" + path + "'.", line, column);
+      genError("Cannot redefine existing key '" + path + "'.", line, column);
     }
     assignedPaths.push(path);
     context = deepRef(data, path, {});
@@ -84,6 +84,7 @@ function compile(nodes) {
     var column = node.column;
 
     if (assignedPaths.indexOf(path) === -1) assignedPaths.push(path);
+    assignedPaths.push(path);
     context = deepRef(data, path, []);
     currentPath = path;
 
@@ -91,6 +92,8 @@ function compile(nodes) {
       var newObj = {};
       context.push(newObj);
       context = newObj;
+    } else {
+      genError("Cannot redefine existing key '" + path + "'.", line, column);
     }
   }
 
@@ -131,7 +134,7 @@ function compile(nodes) {
       } else {
         if (node.type != firstType) {
           genError("Cannot add value of type " + node.type + " to array of type " +
-            node.type + ".", node.line, node.column);
+            firstType + ".", node.line, node.column);
         }
       }
     }
