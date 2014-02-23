@@ -1,3 +1,11 @@
+2.0.1 - Feb 23 2014
+===================
+
+### Bug Fixes
+
+* Fix incorrect messaging in array type errors
+* Fix missing error when overwriting key with table array
+
 2.0.0 - Feb 23 2014
 ===================
 
