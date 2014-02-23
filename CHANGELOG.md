@@ -1,3 +1,10 @@
+2.0.2 - Feb 23 2014
+===================
+
+### Bug Fixes
+
+* Fix absence of errors when table path starts or ends with period
+
 2.0.1 - Feb 23 2014
 ===================
 
