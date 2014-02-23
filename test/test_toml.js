@@ -157,6 +157,22 @@ exports.testWhitespace = function(test) {
   test.done();
 };
 
+exports.testErrorOnDotAtStartOfKey = function(test) {
+  test.throws(function() {
+    var str = "[.a]\nb = 1";
+    toml.parse(str);
+  });
+  test.done()
+};
+
+exports.testErrorOnDotAtEndOfKey = function(test) {
+  test.throws(function() {
+    var str = "[.a]\nb = 1";
+    toml.parse(str);
+  });
+  test.done()
+};
+
 exports.testErrorOnTableOverride = function(test) {
   test.throws(function() {
     var str = "[a]\nb = 1\n\n[a]\nc = 2";
