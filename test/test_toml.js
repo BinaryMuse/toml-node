@@ -50,11 +50,12 @@ var hardExampleExpected = {
 };
 
 var easyTableArrayExpected = {
-  resource: [
-    { name: 'file.ext1', type: 'video1', path: 'path/to/file1' },
-    { name: 'file.ext2', type: 'video2', path: 'path/to/file2' }
+  "products": [
+    { "name": "Hammer", "sku": 738594937 },
+    { },
+    { "name": "Nail", "sku": 284758393, "color": "gray" }
   ]
-}
+};
 
 var hardTableArrayExpected = {
   "fruit": [
