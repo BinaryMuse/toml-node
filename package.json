@@ -4,7 +4,7 @@
   "description": "TOML parser for Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/nodeunit test/test_*.js"
+    "test": "nodeunit test/test_*.js"
   },
   "repository": "git://github.com/BinaryMuse/toml-node.git",
   "keywords": [
