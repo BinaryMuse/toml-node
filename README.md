@@ -7,6 +7,11 @@ TOML Parser for Node.js
 
 If you haven't heard of TOML, well you're just missing out. [Go check it out now.](https://github.com/mojombo/toml) Back? Good.
 
+TOML Spec Support
+-----------------
+
+toml-node supports version 0.2.0 the TOML spec as specified by [mojombo/toml@v0.2.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.2.0.md)
+
 Installation
 ------------
 
@@ -58,11 +63,6 @@ Live Demo
 ---------
 
 You can experiment with TOML online at http://binarymuse.github.io/toml-node/, which uses the latest version of this library.
-
-TOML Spec Support
------------------
-
-toml-node supports version 0.2.0 the TOML spec as specified by [mojombo/toml@v0.2.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.2.0.md)
 
 Building & Testing
 ------------------
