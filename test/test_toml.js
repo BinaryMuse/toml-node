@@ -173,6 +173,14 @@ exports.testErrorOnKeyOverride = function(test) {
   test.done()
 };
 
+exports.testErrorOnKeyOverrideWithArrayTable = function(test) {
+  test.throws(function() {
+    var str = "[a]\nb = 1\n[[a]]\nc = 2";
+    toml.parse(str);
+  });
+  test.done()
+};
+
 exports.testErrorOnKeyReplace = function(test) {
   test.throws(function() {
     var str = "[a]\nb = 1\nb = 2";
