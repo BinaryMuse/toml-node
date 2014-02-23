@@ -17,13 +17,13 @@ line
   / S+ (NL+ / EOF)
 
 expression
-  = comment / subpath / assignment
+  = comment / path / assignment
 
 comment
   = '#' (!(NL / EOF) .)*
 
-subpath
-  = '[' name:key ']'                    { return node(line, column, 'Group', name) }
+path
+  = '[' name:key ']'                    { return node(line, column, 'Table', name) }
 
 assignment
   = key:key S* '=' S* value:value       { return node(line, column, 'Set', value, key) }

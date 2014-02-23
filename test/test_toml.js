@@ -51,7 +51,7 @@ var hardExampleExpected = {
 
 var badInputs = [
   '[error]   if you didn\'t catch this, your parser is broken',
-  'string = "Anything other than tabs, spaces and newline after a keygroup or key value pair has ended should produce an error unless it is a comment"   like this',
+  'string = "Anything other than tabs, spaces and newline after a table or key value pair has ended should produce an error unless it is a comment"   like this',
   'array = [\n           \"This might most likely happen in multiline arrays\",\n           Like here,\n           \"or here,\n           and here\"\n           ]     End of array comment, forgot the #',
   'number = 3.14  pi <--again forgot the #'
 ];
@@ -114,7 +114,7 @@ exports.testWhitespace = function(test) {
   test.done();
 };
 
-exports.testErrorOnKeygroupOverride = function(test) {
+exports.testErrorOnTableOverride = function(test) {
   test.throws(function() {
     var str = "[a]\nb = 1\n\n[a]\nc = 2";
     toml.parse(str);
