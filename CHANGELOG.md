@@ -1,3 +1,16 @@
+2.0.0 - Feb 23 2014
+===================
+
+Features
+--------
+
+* Add support for [version 0.2 of the TOML spec](https://github.com/mojombo/toml/blob/master/versions/toml-v0.2.0.md) ([#9](https://github.com/BinaryMuse/toml-node/issues/9))
+
+Internals
+---------
+
+* Upgrade to PEG.js v0.8 and rewrite compiler; parser is now considerably faster (from ~7000ms to ~1000ms to parse `example.toml` 1000 times on Node.js v0.10)
+
 1.0.4 - Aug 17 2013
 ===================
 
