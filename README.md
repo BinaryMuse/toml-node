@@ -62,7 +62,7 @@ You can experiment with TOML online at http://binarymuse.github.io/toml-node/, w
 TOML Spec Support
 -----------------
 
-toml-node supports version 0.1.0 the TOML spec as specified by [mojombo/toml@v0.1.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.1.0.md)
+toml-node supports version 0.2.0 the TOML spec as specified by [mojombo/toml@v0.2.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.2.0.md)
 
 Building & Testing
 ------------------
