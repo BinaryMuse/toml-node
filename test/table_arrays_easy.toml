@@ -1,0 +1,9 @@
+[[resource]]
+name = "file.ext1"
+type = "video1"
+path = "path/to/file1"
+
+[[resource]]
+name = "file.ext2"
+type = "video2"
+path = "path/to/file2"

@@ -1,12 +1,16 @@
 {
   var nodes = [];
 
-  function node(line, column, type, value, key) {
-    var node = { type: type, value: value, line: line, column: column };
-    if (key) node.key = key;
+  function addNode(node) {
     nodes.push(node);
     return node;
-  };
+  }
+
+  function node(type, value, line, column, key) {
+    var obj = { type: type, value: value, line: line, column: column };
+    if (key) obj.key = key;
+    return obj;
+  }
 }
 
 start
@@ -17,16 +21,19 @@ line
   / S+ (NL+ / EOF)
 
 expression
-  = comment / path / assignment
+  = comment / path / tablearray / assignment
 
 comment
   = '#' (!(NL / EOF) .)*
 
 path
-  = '[' name:key ']'                    { return node(line, column, 'Table', name) }
+  = '[' name:key ']'                    { return addNode(node('ObjectPath', name, line, column)) }
+
+tablearray
+  = '[' '[' name:key ']' ']'            { return addNode(node('ArrayPath', name, line, column)) }
 
 assignment
-  = key:key S* '=' S* value:value       { return node(line, column, 'Set', value, key) }
+  = key:key S* '=' S* value:value       { return addNode(node('Assign', value, line, column, key)) }
 
 key
   = chars:(!(S / NL / '[' / ']' / '=') char:. { return char })+ { return chars.join('') }
@@ -35,27 +42,27 @@ value
   = string / datetime / float / integer / boolean / array
 
 string
-  = '"' chars:string_char* '"'          { return node(line, column, 'String', chars.join('')) }
+  = '"' chars:string_char* '"'          { return node('String', chars.join(''), line, column) }
 
 string_char
   = ESCAPED / (!'"' !'\\' char:. { return char })
 
 float
-  =     digits:(DIGITS '.' DIGITS)      { return node(line, column, 'Float',      parseFloat(digits.join(''))) }
-  / '-' digits:(DIGITS '.' DIGITS)      { return node(line, column, 'Float', -1 * parseFloat(digits.join(''))) }
+  =     digits:(DIGITS '.' DIGITS)      { return node('Float', parseFloat(digits.join('')), line, column) }
+  / '-' digits:(DIGITS '.' DIGITS)      { return node('Float', -1 * parseFloat(digits.join('')), line, column) }
 
 integer
-  =     digits:DIGIT+ !'.'              { return node(line, column, 'Integer',      parseInt(digits.join(''), 10)) }
-  / '-' digits:DIGIT+ !'.'              { return node(line, column, 'Integer', -1 * parseInt(digits.join(''), 10)) }
+  =     digits:DIGIT+ !'.'              { return node('Integer', parseInt(digits.join(''), 10), line, column) }
+  / '-' digits:DIGIT+ !'.'              { return node('Integer', -1 * parseInt(digits.join(''), 10), line, column) }
 
 boolean
-  = 'true'                              { return node(line, column, 'Boolean', true)  }
-  / 'false'                             { return node(line, column, 'Boolean', false) }
+  = 'true'                              { return node('Boolean', true, line, column) }
+  / 'false'                             { return node('Boolean', false, line, column) }
 
 array
-  = '[' value:array_value? ']'                         { return node(line, column, 'Array', value ? [value] : []) }
-  / '[' values:array_value_list+ ']'                   { return node(line, column, 'Array', values) }
-  / '[' values:array_value_list+ value:array_value ']' { return node(line, column, 'Array', values.concat(value)) }
+  = '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], line, column) }
+  / '[' values:array_value_list+ ']'                   { return node('Array', values, line, column) }
+  / '[' values:array_value_list+ value:array_value ']' { return node('Array', values.concat(value), line, column) }
 
 array_value
   = array_sep* value:value array_sep*                  { return value }
@@ -80,7 +87,7 @@ datetime
       ':'
       DIGIT DIGIT
       'Z'
-    )            { return node(line, column, 'Datetime', new Date(date.join(''))) }
+    )            { return node('Date', new Date(date.join('')), line, column) }
 
 S                = [ \t]
 NL               = "\n" / "\r" "\n"

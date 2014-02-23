@@ -49,6 +49,36 @@ var hardExampleExpected = {
   }
 };
 
+var easyTableArrayExpected = {
+  resource: [
+    { name: 'file.ext1', type: 'video1', path: 'path/to/file1' },
+    { name: 'file.ext2', type: 'video2', path: 'path/to/file2' }
+  ]
+}
+
+var hardTableArrayExpected = {
+  "fruit": [
+    {
+      "name": "apple",
+      "physical": {
+        "color": "red",
+        "shape": "round"
+      },
+      "variety": [
+        { "name": "red delicious" },
+        { "name": "granny smith" }
+      ]
+    },
+    {},
+    {
+      "name": "banana",
+      "variety": [
+        { "name": "plantain" }
+      ]
+    }
+  ]
+}
+
 var badInputs = [
   '[error]   if you didn\'t catch this, your parser is broken',
   'string = "Anything other than tabs, spaces and newline after a table or key value pair has ended should produce an error unless it is a comment"   like this',
@@ -65,6 +95,18 @@ exports.testParsesExample = function(test) {
 exports.testParsesHardExample = function(test) {
   var str = fs.readFileSync(__dirname + "/hard_example.toml", 'utf-8')
   test.deepEqual(toml.parse(str), hardExampleExpected);
+  test.done();
+};
+
+exports.testEasyTableArrays = function(test) {
+  var str = fs.readFileSync(__dirname + "/table_arrays_easy.toml", 'utf8')
+  test.deepEqual(toml.parse(str), easyTableArrayExpected);
+  test.done();
+};
+
+exports.testHarderTableArrays = function(test) {
+  var str = fs.readFileSync(__dirname + "/table_arrays_hard.toml", 'utf8')
+  test.deepEqual(toml.parse(str), hardTableArrayExpected);
   test.done();
 };
 
