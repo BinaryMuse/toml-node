@@ -59,6 +59,10 @@ fs.createReadStream('tomlFile.toml', 'utf8').pipe(concat(function(data) {
 
 Thanks [@ForbesLindesay](https://github.com/ForbesLindesay) for the suggestion.
 
+### Requiring with Node.js
+
+You can use the [toml-require package](https://github.com/BinaryMuse/toml-require) to `require()` your `.toml` files with Node.js
+
 Live Demo
 ---------
 
