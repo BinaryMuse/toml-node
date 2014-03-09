@@ -76,6 +76,13 @@ var hardTableArrayExpected = {
       "variety": [
         { "name": "plantain" }
       ]
+    },
+    {
+      "name": "orange",
+      "physical": {
+        "color": "orange",
+        "shape": "round"
+      }
     }
   ]
 }

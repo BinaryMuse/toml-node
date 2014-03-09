@@ -18,3 +18,10 @@ name = "banana"
 
   [[fruit.variety]]
     name = "plantain"
+
+[[fruit]]
+name = "orange"
+
+[fruit.physical]
+color = "orange"
+shape = "round"
