@@ -1,3 +1,10 @@
+2.0.4 - Mar 9 2014
+==================
+
+### Bug Fiex
+
+* Fix failure on duplicate table name inside table array ([#11](https://github.com/BinaryMuse/toml-node/issues/11))
+
 2.0.2 - Feb 23 2014
 ===================
 
