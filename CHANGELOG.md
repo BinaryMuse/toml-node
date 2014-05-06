@@ -1,3 +1,14 @@
+2.0.5 - May 5 2014
+==================
+
+### Bug Fixes
+
+* Fix loop iteration leak, by [sebmck](https://github.com/sebmck) ([#12](https://github.com/BinaryMuse/toml-node/pull/12))
+
+### Development
+
+* Tests now run JSHint on `lib/compiler.js`
+
 2.0.4 - Mar 9 2014
 ==================
 
