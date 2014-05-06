@@ -14,7 +14,7 @@
   "author": "Brandon Tilley <brandon@brandontilley.com>",
   "license": "MIT",
   "devDependencies": {
-    "jshint": "^2.5.0",
+    "jshint": "*",
     "nodeunit": "~0.8.6",
     "pegjs": "~0.8.0"
   }
