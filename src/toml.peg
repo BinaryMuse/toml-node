@@ -59,7 +59,8 @@ boolean
   / 'false'                             { return node('Boolean', false, line, column) }
 
 array
-  = '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], line, column) }
+  = '[' array_sep* ']'                                 { return node('Array', [], line, column) }
+  / '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], line, column) }
   / '[' values:array_value_list+ ']'                   { return node('Array', values, line, column) }
   / '[' values:array_value_list+ value:array_value ']' { return node('Array', values.concat(value), line, column) }
 

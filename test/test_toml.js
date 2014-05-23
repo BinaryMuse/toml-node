@@ -142,6 +142,26 @@ exports.testEmptyArray = function(test) {
   test.done();
 };
 
+exports.testArrayWithWhitespace = function(test) {
+  var str = "[versions]\nfiles = [\n 3, \n    5 \n\n ]";
+  test.deepEqual(toml.parse(str), {
+    versions: {
+      files: [3, 5]
+    }
+  });
+  test.done();
+};
+
+exports.testEmptyArrayWithWhitespace = function(test) {
+  var str = "[versions]\nfiles = [\n  \n  ]";
+  test.deepEqual(toml.parse(str), {
+    versions: {
+      files: []
+    }
+  });
+  test.done();
+};
+
 exports.textDefineOnSuperkey = function(test) {
   var str = "[a.b]\nc = 1\n\n[a]\nd = 2";
   var expected = {
