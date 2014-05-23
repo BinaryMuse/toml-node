@@ -81,8 +81,6 @@ Any changes to `src/toml.peg` requires a regeneration of the parser with `./gene
 
 toml-node is tested on Travis CI and is tested against:
 
- * Node 0.6
- * Node 0.8
  * Node 0.10
  * Node 0.11
 
