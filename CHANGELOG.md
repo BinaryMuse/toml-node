@@ -1,3 +1,10 @@
+2.0.6 - May 23 2014
+===================
+
+### Bug Fixes
+
+* Fix support for empty arrays with newlines ([#13](https://github.com/BinaryMuse/toml-node/issues/13))
+
 2.0.5 - May 5 2014
 ==================
 
