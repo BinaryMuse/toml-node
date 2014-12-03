@@ -199,11 +199,6 @@ exports.testUnicode = function(test) {
 
 exports.testMultilineStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_strings.toml", 'utf8');
-  try {
-    toml.parse(str);
-  } catch (e) {
-    console.log("e:", e);
-  }
   test.deepEqual(toml.parse(str), {
     key1: "One\nTwo",
     key2: "One\nTwo",
@@ -214,11 +209,6 @@ exports.testMultilineStrings = function(test) {
 
 exports.testMultilineEatWhitespace = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_eat_whitespace.toml", 'utf8');
-  try {
-    toml.parse(str);
-  } catch (e) {
-    console.log("e:", e);
-  }
   test.deepEqual(toml.parse(str), {
     key1: "The quick brown fox jumps over the lazy dog.",
     key2: "The quick brown fox jumps over the lazy dog.",
@@ -229,11 +219,6 @@ exports.testMultilineEatWhitespace = function(test) {
 
 exports.testLiteralStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/literal_strings.toml", 'utf8');
-  try {
-    toml.parse(str);
-  } catch (e) {
-    console.log("e:", e);
-  }
   test.deepEqual(toml.parse(str), {
     winpath: "C:\\Users\\nodejs\\templates",
     winpath2: "\\\\ServerX\\admin$\\system32\\",
@@ -245,11 +230,6 @@ exports.testLiteralStrings = function(test) {
 
 exports.testMultilineLiteralStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_literal_strings.toml", 'utf8');
-  try {
-    toml.parse(str);
-  } catch (e) {
-    console.log("e:", e);
-  }
   test.deepEqual(toml.parse(str), {
     regex2: "I [dw]on't need \\d{2} apples",
     lines: "The first newline is\ntrimmed in raw strings.\n   All other whitespace\n   is preserved.\n"
@@ -272,11 +252,6 @@ exports.testFloatFormats = function(test) {
   var str = "a = +1.0\nb = 3.1415\nc = -0.01\n" +
             "d = 5e+22\ne = 1e6\nf = -2E-2\n" +
             "g = 6.626e-34";
-  try {
-    toml.parse(str);
-  } catch (e) {
-    console.log("e:", e);
-  }
   test.deepEqual(toml.parse(str), {
     a: 1.0,
     b: 3.1415,
