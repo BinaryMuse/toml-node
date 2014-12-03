@@ -184,6 +184,111 @@ exports.testWhitespace = function(test) {
   test.done();
 };
 
+exports.testUnicode = function(test) {
+  var str = "str = \"My name is Jos\\u00E9\"";
+  test.deepEqual(toml.parse(str), {
+    str: "My name is Jos\u00E9"
+  });
+
+  var str = "str = \"My name is Jos\\u000000E9\"";
+  test.deepEqual(toml.parse(str), {
+    str: "My name is Jos\u00E9"
+  });
+  test.done();
+};
+
+exports.testMultilineStrings = function(test) {
+  var str = fs.readFileSync(__dirname + "/multiline_strings.toml", 'utf8');
+  try {
+    toml.parse(str);
+  } catch (e) {
+    console.log("e:", e);
+  }
+  test.deepEqual(toml.parse(str), {
+    key1: "One\nTwo",
+    key2: "One\nTwo",
+    key3: "One\nTwo"
+  });
+  test.done();
+};
+
+exports.testMultilineEatWhitespace = function(test) {
+  var str = fs.readFileSync(__dirname + "/multiline_eat_whitespace.toml", 'utf8');
+  try {
+    toml.parse(str);
+  } catch (e) {
+    console.log("e:", e);
+  }
+  test.deepEqual(toml.parse(str), {
+    key1: "The quick brown fox jumps over the lazy dog.",
+    key2: "The quick brown fox jumps over the lazy dog.",
+    key3: "The quick brown fox jumps over the lazy dog."
+  });
+  test.done();
+};
+
+exports.testLiteralStrings = function(test) {
+  var str = fs.readFileSync(__dirname + "/literal_strings.toml", 'utf8');
+  try {
+    toml.parse(str);
+  } catch (e) {
+    console.log("e:", e);
+  }
+  test.deepEqual(toml.parse(str), {
+    winpath: "C:\\Users\\nodejs\\templates",
+    winpath2: "\\\\ServerX\\admin$\\system32\\",
+    quoted: "Tom \"Dubs\" Preston-Werner",
+    regex: "<\\i\\c*\\s*>"
+  });
+  test.done();
+};
+
+exports.testMultilineLiteralStrings = function(test) {
+  var str = fs.readFileSync(__dirname + "/multiline_literal_strings.toml", 'utf8');
+  try {
+    toml.parse(str);
+  } catch (e) {
+    console.log("e:", e);
+  }
+  test.deepEqual(toml.parse(str), {
+    regex2: "I [dw]on't need \\d{2} apples",
+    lines: "The first newline is\ntrimmed in raw strings.\n   All other whitespace\n   is preserved.\n"
+  });
+  test.done();
+};
+
+exports.testIntegerFormats = function(test) {
+  var str = "a = +99\nb = 42\nc = 0\nd = -17";
+  test.deepEqual(toml.parse(str), {
+    a: 99,
+    b: 42,
+    c: 0,
+    d: -17
+  });
+  test.done();
+};
+
+exports.testFloatFormats = function(test) {
+  var str = "a = +1.0\nb = 3.1415\nc = -0.01\n" +
+            "d = 5e+22\ne = 1e6\nf = -2E-2\n" +
+            "g = 6.626e-34";
+  try {
+    toml.parse(str);
+  } catch (e) {
+    console.log("e:", e);
+  }
+  test.deepEqual(toml.parse(str), {
+    a: 1.0,
+    b: 3.1415,
+    c: -0.01,
+    d: 5e22,
+    e: 1e6,
+    f: -2e-2,
+    g: 6.626e-34
+  });
+  test.done();
+};
+
 exports.testErrorOnDotAtStartOfKey = function(test) {
   test.throws(function() {
     var str = "[.a]\nb = 1";
