@@ -1,7 +1,7 @@
 {
   "name": "toml",
   "version": "2.0.6",
-  "description": "TOML parser for Node.js",
+  "description": "TOML parser for Node.js (spec v0.2.0)",
   "main": "index.js",
   "scripts": {
     "test": "jshint lib/compiler.js && nodeunit test/test_*.js"
