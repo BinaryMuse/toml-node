@@ -133,21 +133,32 @@ array_value_list
 array_sep
   = S / NL / comment
 
-datetime
+secfragment
+  = '.' digits:DIGITS                                  { return "." + digits }
+
+date
   = date:(
       DIGIT DIGIT DIGIT DIGIT
       '-'
       DIGIT DIGIT
       '-'
       DIGIT DIGIT
-      'T'
-      DIGIT DIGIT
-      ':'
-      DIGIT DIGIT
-      ':'
-      DIGIT DIGIT
-      'Z'
-    )            { return node('Date', new Date(date.join('')), line, column) }
+    )                                                  { return  date.join('') }
+
+time
+  = time:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT) { return time.join('') }
+
+time_with_offset
+  = time:(
+      DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?
+      ('-' / '+')
+      DIGIT DIGIT ':' DIGIT DIGIT
+    )                                                  { return time.join('') }
+
+datetime
+  = date:date 'T' time:time 'Z'               { return node('Date', new Date(date + "T" + time + "Z"), line, column) }
+  / date:date 'T' time:time_with_offset       { return node('Date', new Date(date + "T" + time), line, column) }
+
 
 S                = [ \t]
 NL               = "\n" / "\r" "\n"
@@ -165,5 +176,5 @@ ESCAPED          = '\\"'                { return '"'  }
                  / '\\f'                { return '\f' }
                  / '\\r'                { return '\r' }
                  / ESCAPED_UNICODE
-ESCAPED_UNICODE  = "\\u" digits:(HEX HEX HEX HEX HEX HEX HEX HEX) { return fromCodePoint(parseInt("0x" + digits.join(''))) }
+ESCAPED_UNICODE  = "\\U" digits:(HEX HEX HEX HEX HEX HEX HEX HEX) { return fromCodePoint(parseInt("0x" + digits.join(''))) }
                  / "\\u" digits:(HEX HEX HEX HEX) { return fromCodePoint(parseInt("0x" + digits.join(''))) }

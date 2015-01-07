@@ -190,7 +190,7 @@ exports.testUnicode = function(test) {
     str: "My name is Jos\u00E9"
   });
 
-  var str = "str = \"My name is Jos\\u000000E9\"";
+  var str = "str = \"My name is Jos\\U000000E9\"";
   test.deepEqual(toml.parse(str), {
     str: "My name is Jos\u00E9"
   });
@@ -260,6 +260,32 @@ exports.testFloatFormats = function(test) {
     e: 1e6,
     f: -2e-2,
     g: 6.626e-34
+  });
+  test.done();
+};
+
+exports.testDate = function(test) {
+  var date = new Date("1979-05-27T07:32:00Z");
+  test.deepEqual(toml.parse("a = 1979-05-27T07:32:00Z"), {
+    a: date
+  });
+  test.done();
+};
+
+exports.testDateWithOffset = function(test) {
+  var date1 = new Date("1979-05-27T07:32:00-07:00"),
+      date2 = new Date("1979-05-27T07:32:00+02:00");
+  test.deepEqual(toml.parse("a = 1979-05-27T07:32:00-07:00\nb = 1979-05-27T07:32:00+02:00"), {
+    a: date1,
+    b: date2
+  });
+  test.done();
+};
+
+exports.testDateWithSecondFraction = function(test) {
+  var date = new Date("1979-05-27T00:32:00.999999-07:00");
+  test.deepEqual(toml.parse("a = 1979-05-27T00:32:00.999999-07:00"), {
+    a: date
   });
   test.done();
 };
