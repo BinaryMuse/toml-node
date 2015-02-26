@@ -10,7 +10,7 @@ If you haven't heard of TOML, well you're just missing out. [Go check it out now
 TOML Spec Support
 -----------------
 
-toml-node supports version 0.4.0 the TOML spec as specified by [mojombo/toml@v0.4.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.4.0.md)
+toml-node supports version 0.4.0 the TOML spec as specified by [mojombo/toml@v0.4.0](https://github.com/mojombo/toml/blob/master/versions/en/toml-v0.4.0.md)
 
 Installation
 ------------
