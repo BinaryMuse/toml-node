@@ -197,6 +197,14 @@ exports.testUnicode = function(test) {
   test.done();
 };
 
+exports.testBadUnicode = function(test) {
+  var str = "str = \"My name is Jos\\uD800\"";
+  test.throws(function() {
+    toml.parse(str);
+  });
+  test.done();
+};
+
 exports.testMultilineStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_strings.toml", 'utf8');
   test.deepEqual(toml.parse(str), {
