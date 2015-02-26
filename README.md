@@ -83,6 +83,7 @@ toml-node is tested on Travis CI and is tested against:
 
  * Node 0.10
  * Node 0.12
+ * Latest stable io.js
 
 License
 -------
