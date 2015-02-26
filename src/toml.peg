@@ -91,7 +91,7 @@ key
   = chars:(!(S / NL / '[' / ']' / '=') char:. { return char })+ { return chars.join('') }
 
 value
-  = string / datetime / float / integer / boolean / array
+  = string / datetime / float / integer / boolean / array / inline_table
 
 string
   = '"""' NL? chars:multiline_string_char* '"""'  { return node('String', chars.join(''), line, column) }
@@ -147,6 +147,13 @@ array_value_list
 
 array_sep
   = S / NL / comment
+
+inline_table
+  = '{' S* values:inline_table_assignment+ S* '}'      { return node('InlineTable', values, line, column) }
+
+inline_table_assignment
+  = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, line, column, key) }
+  / S* key:key S* '=' S* value:value                   { return node('InlineTableValue', value, line, column, key) }
 
 secfragment
   = '.' digits:DIGITS                                  { return "." + digits }

@@ -197,14 +197,6 @@ exports.testUnicode = function(test) {
   test.done();
 };
 
-exports.testBadUnicode = function(test) {
-  var str = "str = \"My name is Jos\\uD800\"";
-  test.throws(function() {
-    toml.parse(str);
-  });
-  test.done();
-};
-
 exports.testMultilineStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_strings.toml", 'utf8');
   test.deepEqual(toml.parse(str), {
@@ -300,6 +292,46 @@ exports.testDateWithSecondFraction = function(test) {
   var date = new Date("1979-05-27T00:32:00.999999-07:00");
   test.deepEqual(toml.parse("a = 1979-05-27T00:32:00.999999-07:00"), {
     a: date
+  });
+  test.done();
+};
+
+exports.testInlineTables = function(test) {
+  var str = fs.readFileSync(__dirname + "/inline_tables.toml", 'utf8'),
+      parsed = toml.parse(str);
+  test.deepEqual(parsed, {
+    name: {
+      first: "Tom",
+      last: "Preston-Werner"
+    },
+    point: {
+      x: 1,
+      y: 2
+    },
+    nested: {
+      x: {
+        a: {
+          b: 3
+        }
+      }
+    },
+    points: [
+      { x: 1, y: 2, z: 3 },
+      { x: 7, y: 8, z: 9 },
+      { x: 2, y: 4, z: 8 }
+    ],
+    arrays: [
+      { x: [1, 2, 3], y: [4, 5, 6] },
+      { x: [7, 8, 9], y: [0, 1, 2] }
+    ]
+  });
+  test.done();
+};
+
+exports.testErrorOnBadUnicode = function(test) {
+  var str = "str = \"My name is Jos\\uD800\"";
+  test.throws(function() {
+    toml.parse(str);
   });
   test.done();
 };
