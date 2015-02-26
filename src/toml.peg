@@ -171,7 +171,6 @@ DIGIT_OR_UNDER   = [0-9]
 DIGITS           = d:DIGIT_OR_UNDER+    { return d.join('') }
 ESCAPED          = '\\"'                { return '"'  }
                  / '\\\\'               { return '\\' }
-                 / '\\/'                { return '/'  }
                  / '\\b'                { return '\b' }
                  / '\\t'                { return '\t' }
                  / '\\n'                { return '\n' }
