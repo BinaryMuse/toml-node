@@ -4,6 +4,7 @@
   "description": "TOML parser for Node.js (parses TOML spec v0.4.0)",
   "main": "index.js",
   "scripts": {
+    "build": "pegjs --cache src/toml.peg lib/parser.js",
     "test": "jshint lib/compiler.js && nodeunit test/test_*.js"
   },
   "repository": "git://github.com/BinaryMuse/toml-node.git",
