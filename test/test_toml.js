@@ -238,12 +238,14 @@ exports.testMultilineLiteralStrings = function(test) {
 };
 
 exports.testIntegerFormats = function(test) {
-  var str = "a = +99\nb = 42\nc = 0\nd = -17";
+  var str = "a = +99\nb = 42\nc = 0\nd = -17\ne = 1_000_001\nf = 1_2_3_4_5   # why u do dis";
   test.deepEqual(toml.parse(str), {
     a: 99,
     b: 42,
     c: 0,
-    d: -17
+    d: -17,
+    e: 1000001,
+    f: 12345
   });
   test.done();
 };
@@ -251,7 +253,9 @@ exports.testIntegerFormats = function(test) {
 exports.testFloatFormats = function(test) {
   var str = "a = +1.0\nb = 3.1415\nc = -0.01\n" +
             "d = 5e+22\ne = 1e6\nf = -2E-2\n" +
-            "g = 6.626e-34";
+            "g = 6.626e-34\n" +
+            "h = 9_224_617.445_991_228_313\n" +
+            "i = 1e1_000";
   test.deepEqual(toml.parse(str), {
     a: 1.0,
     b: 3.1415,
@@ -259,7 +263,9 @@ exports.testFloatFormats = function(test) {
     d: 5e22,
     e: 1e6,
     f: -2e-2,
-    g: 6.626e-34
+    g: 6.626e-34,
+    h: 9224617.445991228313,
+    i: 1e1000
   });
   test.done();
 };

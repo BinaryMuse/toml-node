@@ -165,8 +165,10 @@ NL               = "\n" / "\r" "\n"
 NLS              = NL / S
 EOF              = !.
 HEX              = [0-9a-f]i
-DIGIT            = [0-9]
-DIGITS           = d:[0-9]+             { return d.join('') }
+DIGIT            = DIGIT_OR_UNDER
+DIGIT_OR_UNDER   = [0-9]
+                 / '_'                  { return "" }
+DIGITS           = d:DIGIT_OR_UNDER+    { return d.join('') }
 ESCAPED          = '\\"'                { return '"'  }
                  / '\\\\'               { return '\\' }
                  / '\\/'                { return '/'  }
