@@ -19,6 +19,8 @@ toml-node is available via npm.
 
     npm install toml
 
+toml-node also works with browser module bundlers like Browserify and webpack.
+
 Usage
 -----
 
@@ -74,10 +76,10 @@ Building & Testing
 toml-node uses [the PEG.js parser generator](http://pegjs.majda.cz/).
 
     npm install
-    ./generate.sh
+    npm run build
     npm test
 
-Any changes to `src/toml.peg` requires a regeneration of the parser with `./generate.sh`.
+Any changes to `src/toml.peg` requires a regeneration of the parser with `npm run build`.
 
 toml-node is tested on Travis CI and is tested against:
 
