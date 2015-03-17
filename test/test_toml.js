@@ -296,6 +296,18 @@ exports.testDateWithSecondFraction = function(test) {
   test.done();
 };
 
+exports.testDateFromIsoString = function(test) {
+  // https://github.com/BinaryMuse/toml-node/issues/20
+  var date = new Date(),
+      dateStr = date.toISOString(),
+      tomlStr = "a = " + dateStr;
+
+  test.deepEqual(toml.parse(tomlStr), {
+    a: date
+  });
+  test.done();
+};
+
 exports.testInlineTables = function(test) {
   var str = fs.readFileSync(__dirname + "/inline_tables.toml", 'utf8'),
       parsed = toml.parse(str);

@@ -165,17 +165,17 @@ date
       DIGIT DIGIT
       '-'
       DIGIT DIGIT
-    )                                                  { return  date.join('') }
+    )                                                               { return  date.join('') }
 
 time
-  = time:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT) { return time.join('') }
+  = time:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?) { return time.join('') }
 
 time_with_offset
   = time:(
       DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?
       ('-' / '+')
       DIGIT DIGIT ':' DIGIT DIGIT
-    )                                                  { return time.join('') }
+    )                                                               { return time.join('') }
 
 datetime
   = date:date 'T' time:time 'Z'               { return node('Date', new Date(date + "T" + time + "Z"), line, column) }
