@@ -308,6 +308,15 @@ exports.testDateFromIsoString = function(test) {
   test.done();
 };
 
+exports.testLeadingNewlines = function(test) {
+  // https://github.com/BinaryMuse/toml-node/issues/22
+  var str = "\ntest = \"ing\"";
+  test.deepEqual(toml.parse(str), {
+    test: "ing"
+  });
+  test.done();
+};
+
 exports.testInlineTables = function(test) {
   var str = fs.readFileSync(__dirname + "/inline_tables.toml", 'utf8'),
       parsed = toml.parse(str);

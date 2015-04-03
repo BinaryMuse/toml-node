@@ -71,6 +71,7 @@ start
 line
   = S* expr:expression S* comment* (NL+ / EOF)
   / S+ (NL+ / EOF)
+  / NL
 
 expression
   = comment / path / tablearray / assignment
