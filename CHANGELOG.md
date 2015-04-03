@@ -1,3 +1,8 @@
+2.2.2 - April 3 2015
+====================
+
+* Correctly handle newlines at beginning of string ([#22](https://github.com/BinaryMuse/toml-node/issues/22))
+
 2.2.1 - March 17 2015
 =====================
 
