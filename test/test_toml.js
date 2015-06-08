@@ -398,6 +398,15 @@ exports.testErrorOnKeyOverride = function(test) {
   test.done()
 };
 
+exports.testErrorOnKeyOverrideWithNested = function(test) {
+  // https://github.com/BinaryMuse/toml-node/issues/23
+  test.throws(function() {
+    var str = "[a]\nb = \"a\"\n[a.b.c]";
+    toml.parse(str);
+  }, "existing key 'a.b'");
+  test.done();
+};
+
 exports.testErrorOnKeyOverrideWithArrayTable = function(test) {
   test.throws(function() {
     var str = "[a]\nb = 1\n[[a]]\nc = 2";
