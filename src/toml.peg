@@ -150,7 +150,7 @@ array_sep
   = S / NL / comment
 
 inline_table
-  = '{' S* values:inline_table_assignment+ S* '}'      { return node('InlineTable', values, line, column) }
+  = '{' S* values:inline_table_assignment* S* '}'      { return node('InlineTable', values, line, column) }
 
 inline_table_assignment
   = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, line, column, key) }

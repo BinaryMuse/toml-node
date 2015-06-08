@@ -349,6 +349,15 @@ exports.testInlineTables = function(test) {
   test.done();
 };
 
+exports.testEmptyInlineTables = function(test) {
+  // https://github.com/BinaryMuse/toml-node/issues/24
+  var str = "a = { }";
+  test.deepEqual(toml.parse(str), {
+    a: {}
+  });
+  test.done();
+};
+
 exports.testErrorOnBadUnicode = function(test) {
   var str = "str = \"My name is Jos\\uD800\"";
   test.throws(function() {
