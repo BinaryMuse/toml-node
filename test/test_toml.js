@@ -423,6 +423,15 @@ exports.testErrorOnKeyReplace = function(test) {
   test.done()
 };
 
+exports.testErrorOnInlineTableReplace = function(test) {
+  // https://github.com/BinaryMuse/toml-node/issues/25
+  test.throws(function() {
+    var str = "a = { b = 1 }\n[a]\nc = 2";
+    toml.parse(str);
+  }, "existing key 'a'");
+  test.done();
+};
+
 exports.testErrorOnArrayMismatch = function(test) {
   test.throws(function() {
     var str = 'data = [1, 2, "test"]'
