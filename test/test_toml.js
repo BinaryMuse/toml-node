@@ -162,7 +162,7 @@ exports.testEmptyArrayWithWhitespace = function(test) {
   test.done();
 };
 
-exports.textDefineOnSuperkey = function(test) {
+exports.testDefineOnSuperkey = function(test) {
   var str = "[a.b]\nc = 1\n\n[a]\nd = 2";
   var expected = {
     a: {
@@ -431,7 +431,7 @@ exports.testErrorOnArrayMismatch = function(test) {
   test.done();
 };
 
-exports.textErrorOnBadInputs = function(test) {
+exports.testErrorOnBadInputs = function(test) {
   var count = 0;
   for (i in badInputs) {
     (function(num) {
