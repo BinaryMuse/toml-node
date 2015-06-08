@@ -1,3 +1,10 @@
+2.2.3 - June 8 2015
+===================
+
+* Support empty inline tables ([#24](https://github.com/BinaryMuse/toml-node/issues/24))
+* Do not allow implicit table definitions to replace value ([#23](https://github.com/BinaryMuse/toml-node/issues/23))
+* Don't allow tables to replace inline tables ([#25](https://github.com/BinaryMuse/toml-node/issues/25))
+
 2.2.2 - April 3 2015
 ====================
 
