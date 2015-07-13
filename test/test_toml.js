@@ -368,6 +368,103 @@ exports.testEmptyInlineTables = function(test) {
   test.done();
 };
 
+exports.testKeyNamesWithWhitespaceAroundStartAndFinish = function(test) {
+  var str = "[ a ]\nb = 1";
+  test.parsesToml(str, {
+    a: {
+      b: 1
+    }
+  });
+  test.done();
+};
+
+exports.testKeyNamesWithWhitespaceAroundDots = function(test) {
+  var str = "[ a . b . c]\nd = 1";
+  test.parsesToml(str, {
+    a: {
+      b: {
+        c: {
+          d: 1
+        }
+      }
+    }
+  });
+  test.done();
+};
+
+exports.testSimpleQuotedKeyNames = function(test) {
+  var str = "[\"ʞ\"]\na = 1";
+  test.parsesToml(str, {
+    "ʞ": {
+      a: 1
+    }
+  });
+  test.done();
+};
+
+exports.testComplexQuotedKeyNames = function(test) {
+  var str = "[ a . \"ʞ\" . c ]\nd = 1";
+  test.parsesToml(str, {
+    a: {
+      "ʞ": {
+        c: {
+          d: 1
+        }
+      }
+    }
+  });
+  test.done();
+};
+
+exports.testEscapedQuotesInQuotedKeyNames = function(test) {
+  test.parsesToml("[\"the \\\"thing\\\"\"]\na = true", {
+    'the "thing"': {
+      a: true
+    }
+  });
+  test.done();
+};
+
+exports.testMoreComplexQuotedKeyNames = function(test) {
+  // https://github.com/BinaryMuse/toml-node/issues/21
+  test.parsesToml('["the\\ key"]\n\none = "one"\ntwo = 2\nthree = false', {
+    "the\\ key": {
+      one: "one",
+      two: 2,
+      three: false
+    }
+  });
+  test.parsesToml('[a."the\\ key"]\n\none = "one"\ntwo = 2\nthree = false', {
+    a: {
+      "the\\ key": {
+        one: "one",
+        two: 2,
+        three: false
+      }
+    }
+  });
+  test.parsesToml('[a."the-key"]\n\none = "one"\ntwo = 2\nthree = false', {
+    a: {
+      "the-key": {
+        one: "one",
+        two: 2,
+        three: false
+      }
+    }
+  });
+  test.parsesToml('[a."the.key"]\n\none = "one"\ntwo = 2\nthree = false', {
+    a: {
+      "the.key": {
+        one: "one",
+        two: 2,
+        three: false
+      }
+    }
+  });
+
+  test.done();
+};
+
 exports.testErrorOnBadUnicode = function(test) {
   var str = "str = \"My name is Jos\\uD800\"";
   test.throws(function() {

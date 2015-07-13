@@ -80,16 +80,32 @@ comment
   = '#' (!(NL / EOF) .)*
 
 path
-  = '[' name:key ']'                    { addNode(node('ObjectPath', name, line, column)) }
+  = '[' S* name:table_key S* ']'              { addNode(node('ObjectPath', name, line, column)) }
 
 tablearray
-  = '[' '[' name:key ']' ']'            { addNode(node('ArrayPath', name, line, column)) }
+  = '[' '[' S* name:table_key S* ']' ']'      { addNode(node('ArrayPath', name, line, column)) }
+
+table_key
+  = parts:dot_ended_table_key_part+ name:table_key_part    { return parts.concat(name) }
+  / name:table_key_part                                    { return [name] }
+
+table_key_part
+  = S* name:key S*                      { return name }
+  / S* name:quoted_key S*               { return name }
+
+dot_ended_table_key_part
+  = S* name:key S* '.' S*               { return name }
+  / S* name:quoted_key S* '.' S*        { return name }
 
 assignment
-  = key:key S* '=' S* value:value       { addNode(node('Assign', value, line, column, key)) }
+  = key:key S* '=' S* value:value        { addNode(node('Assign', value, line, column, key)) }
+  / key:quoted_key S* '=' S* value:value { addNode(node('Assign', value, line, column, key)) }
 
 key
-  = chars:(!(S / NL / '[' / ']' / '=') char:. { return char })+ { return chars.join('') }
+  = chars:ASCII_BASIC+ { return chars.join('') }
+
+quoted_key
+  = '"' chars:(!(NL / '[' / ']' / '=' / '"') char:(ESCAPED / .) { return char })+ '"' { return chars.join('') }
 
 value
   = string / datetime / float / integer / boolean / array / inline_table
@@ -191,6 +207,7 @@ HEX              = [0-9a-f]i
 DIGIT            = DIGIT_OR_UNDER
 DIGIT_OR_UNDER   = [0-9]
                  / '_'                  { return "" }
+ASCII_BASIC      = [A-Za-z0-9_\-]
 DIGITS           = d:DIGIT_OR_UNDER+    { return d.join('') }
 ESCAPED          = '\\"'                { return '"'  }
                  / '\\\\'               { return '\\' }
