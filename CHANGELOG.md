@@ -1,3 +1,8 @@
+2.3.0 - July 13 2015
+====================
+
+* Correctly handle quoted keys ([#21](https://github.com/BinaryMuse/toml-node/issues/21))
+
 2.2.3 - June 8 2015
 ===================
 
