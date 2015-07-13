@@ -1,6 +1,18 @@
 var toml = require('../');
 var fs = require('fs');
 
+var assert = require("nodeunit").assert;
+
+assert.parsesToml = function(tomlStr, expected) {
+  try {
+    var actual = toml.parse(tomlStr);
+  } catch (e) {
+    var errInfo = "line: " + e.line + ", column: " + e.column;
+    return assert.fail("TOML parse error: " + e.message, errInfo, null, "at", assert.parsesToml);
+  }
+  return assert.deepEqual(actual, expected);
+};
+
 var exampleExpected = {
   title: "TOML Example",
   owner: {
@@ -96,39 +108,38 @@ var badInputs = [
 
 exports.testParsesExample = function(test) {
   var str = fs.readFileSync(__dirname + "/example.toml", 'utf-8')
-  test.deepEqual(toml.parse(str), exampleExpected);
+  test.parsesToml(str, exampleExpected);
   test.done();
 };
 
 exports.testParsesHardExample = function(test) {
   var str = fs.readFileSync(__dirname + "/hard_example.toml", 'utf-8')
-  test.deepEqual(toml.parse(str), hardExampleExpected);
+  test.parsesToml(str, hardExampleExpected);
   test.done();
 };
 
 exports.testEasyTableArrays = function(test) {
   var str = fs.readFileSync(__dirname + "/table_arrays_easy.toml", 'utf8')
-  test.deepEqual(toml.parse(str), easyTableArrayExpected);
+  test.parsesToml(str, easyTableArrayExpected);
   test.done();
 };
 
 exports.testHarderTableArrays = function(test) {
   var str = fs.readFileSync(__dirname + "/table_arrays_hard.toml", 'utf8')
-  test.deepEqual(toml.parse(str), hardTableArrayExpected);
+  test.parsesToml(str, hardTableArrayExpected);
   test.done();
 };
 
 exports.testSupportsTrailingCommasInArrays = function(test) {
   var str = 'arr = [1, 2, 3,]';
   var expected = { arr: [1, 2, 3] };
-  var results = toml.parse(str);
-  test.deepEqual(results, expected);
+  test.parsesToml(str, expected);
   test.done();
 };
 
 exports.testSingleElementArrayWithNoTrailingComma = function(test) {
   var str = "a = [1]";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     a: [1]
   });
   test.done();
@@ -136,7 +147,7 @@ exports.testSingleElementArrayWithNoTrailingComma = function(test) {
 
 exports.testEmptyArray = function(test) {
   var str = "a = []";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     a: []
   });
   test.done();
@@ -144,7 +155,7 @@ exports.testEmptyArray = function(test) {
 
 exports.testArrayWithWhitespace = function(test) {
   var str = "[versions]\nfiles = [\n 3, \n    5 \n\n ]";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     versions: {
       files: [3, 5]
     }
@@ -154,7 +165,7 @@ exports.testArrayWithWhitespace = function(test) {
 
 exports.testEmptyArrayWithWhitespace = function(test) {
   var str = "[versions]\nfiles = [\n  \n  ]";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     versions: {
       files: []
     }
@@ -172,13 +183,13 @@ exports.testDefineOnSuperkey = function(test) {
       d: 2
     }
   };
-  test.deepEqual(toml.parse(str), expected);
+  test.parsesToml(str, expected);
   test.done();
 };
 
 exports.testWhitespace = function(test) {
   var str = "a = 1\n  \n  b = 2  ";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     a: 1, b: 2
   });
   test.done();
@@ -186,12 +197,12 @@ exports.testWhitespace = function(test) {
 
 exports.testUnicode = function(test) {
   var str = "str = \"My name is Jos\\u00E9\"";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     str: "My name is Jos\u00E9"
   });
 
   var str = "str = \"My name is Jos\\U000000E9\"";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     str: "My name is Jos\u00E9"
   });
   test.done();
@@ -199,7 +210,7 @@ exports.testUnicode = function(test) {
 
 exports.testMultilineStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_strings.toml", 'utf8');
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     key1: "One\nTwo",
     key2: "One\nTwo",
     key3: "One\nTwo"
@@ -209,7 +220,7 @@ exports.testMultilineStrings = function(test) {
 
 exports.testMultilineEatWhitespace = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_eat_whitespace.toml", 'utf8');
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     key1: "The quick brown fox jumps over the lazy dog.",
     key2: "The quick brown fox jumps over the lazy dog.",
     key3: "The quick brown fox jumps over the lazy dog."
@@ -219,7 +230,7 @@ exports.testMultilineEatWhitespace = function(test) {
 
 exports.testLiteralStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/literal_strings.toml", 'utf8');
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     winpath: "C:\\Users\\nodejs\\templates",
     winpath2: "\\\\ServerX\\admin$\\system32\\",
     quoted: "Tom \"Dubs\" Preston-Werner",
@@ -230,7 +241,7 @@ exports.testLiteralStrings = function(test) {
 
 exports.testMultilineLiteralStrings = function(test) {
   var str = fs.readFileSync(__dirname + "/multiline_literal_strings.toml", 'utf8');
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     regex2: "I [dw]on't need \\d{2} apples",
     lines: "The first newline is\ntrimmed in raw strings.\n   All other whitespace\n   is preserved.\n"
   });
@@ -239,7 +250,7 @@ exports.testMultilineLiteralStrings = function(test) {
 
 exports.testIntegerFormats = function(test) {
   var str = "a = +99\nb = 42\nc = 0\nd = -17\ne = 1_000_001\nf = 1_2_3_4_5   # why u do dis";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     a: 99,
     b: 42,
     c: 0,
@@ -256,7 +267,7 @@ exports.testFloatFormats = function(test) {
             "g = 6.626e-34\n" +
             "h = 9_224_617.445_991_228_313\n" +
             "i = 1e1_000";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     a: 1.0,
     b: 3.1415,
     c: -0.01,
@@ -272,7 +283,7 @@ exports.testFloatFormats = function(test) {
 
 exports.testDate = function(test) {
   var date = new Date("1979-05-27T07:32:00Z");
-  test.deepEqual(toml.parse("a = 1979-05-27T07:32:00Z"), {
+  test.parsesToml("a = 1979-05-27T07:32:00Z", {
     a: date
   });
   test.done();
@@ -281,7 +292,7 @@ exports.testDate = function(test) {
 exports.testDateWithOffset = function(test) {
   var date1 = new Date("1979-05-27T07:32:00-07:00"),
       date2 = new Date("1979-05-27T07:32:00+02:00");
-  test.deepEqual(toml.parse("a = 1979-05-27T07:32:00-07:00\nb = 1979-05-27T07:32:00+02:00"), {
+  test.parsesToml("a = 1979-05-27T07:32:00-07:00\nb = 1979-05-27T07:32:00+02:00", {
     a: date1,
     b: date2
   });
@@ -290,7 +301,7 @@ exports.testDateWithOffset = function(test) {
 
 exports.testDateWithSecondFraction = function(test) {
   var date = new Date("1979-05-27T00:32:00.999999-07:00");
-  test.deepEqual(toml.parse("a = 1979-05-27T00:32:00.999999-07:00"), {
+  test.parsesToml("a = 1979-05-27T00:32:00.999999-07:00", {
     a: date
   });
   test.done();
@@ -302,7 +313,7 @@ exports.testDateFromIsoString = function(test) {
       dateStr = date.toISOString(),
       tomlStr = "a = " + dateStr;
 
-  test.deepEqual(toml.parse(tomlStr), {
+  test.parsesToml(tomlStr, {
     a: date
   });
   test.done();
@@ -311,16 +322,15 @@ exports.testDateFromIsoString = function(test) {
 exports.testLeadingNewlines = function(test) {
   // https://github.com/BinaryMuse/toml-node/issues/22
   var str = "\ntest = \"ing\"";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     test: "ing"
   });
   test.done();
 };
 
 exports.testInlineTables = function(test) {
-  var str = fs.readFileSync(__dirname + "/inline_tables.toml", 'utf8'),
-      parsed = toml.parse(str);
-  test.deepEqual(parsed, {
+  var str = fs.readFileSync(__dirname + "/inline_tables.toml", 'utf8');
+  test.parsesToml(str, {
     name: {
       first: "Tom",
       last: "Preston-Werner"
@@ -352,7 +362,7 @@ exports.testInlineTables = function(test) {
 exports.testEmptyInlineTables = function(test) {
   // https://github.com/BinaryMuse/toml-node/issues/24
   var str = "a = { }";
-  test.deepEqual(toml.parse(str), {
+  test.parsesToml(str, {
     a: {}
   });
   test.done();
