@@ -461,6 +461,11 @@ exports.testMoreComplexQuotedKeyNames = function(test) {
       }
     }
   });
+  test.parsesToml('[table]\n\'a "quoted value"\' = "value"', {
+    table: {
+      'a "quoted value"': "value"
+    }
+  });
 
   test.done();
 };
