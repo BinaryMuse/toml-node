@@ -105,19 +105,29 @@ key
   = chars:ASCII_BASIC+ { return chars.join('') }
 
 quoted_key
-  = '"' chars:(!(NL / '[' / ']' / '=' / '"') char:(ESCAPED / .) { return char })+ '"' { return chars.join('') }
+  = node:double_quoted_single_line_string { return node.value }
+  / node:single_quoted_single_line_string { return node.value }
 
 value
   = string / datetime / float / integer / boolean / array / inline_table
 
 string
+  = double_quoted_multiline_string
+  / double_quoted_single_line_string
+  / single_quoted_multiline_string
+  / single_quoted_single_line_string
+
+double_quoted_multiline_string
   = '"""' NL? chars:multiline_string_char* '"""'  { return node('String', chars.join(''), line, column) }
-  / '"' chars:string_char* '"'                    { return node('String', chars.join(''), line, column) }
-  / "'''" NL? chars:multiline_literal_char* "'''" { return node('String', chars.join(''), line, column) }
-  / "'" chars:literal_char* "'"                   { return node('String', chars.join(''), line, column) }
+double_quoted_single_line_string
+  = '"' chars:string_char* '"'                    { return node('String', chars.join(''), line, column) }
+single_quoted_multiline_string
+  = "'''" NL? chars:multiline_literal_char* "'''" { return node('String', chars.join(''), line, column) }
+single_quoted_single_line_string
+  = "'" chars:literal_char* "'"                   { return node('String', chars.join(''), line, column) }
 
 string_char
-  = ESCAPED / (!'"' !'\\' char:. { return char })
+  = ESCAPED / (!'"' char:. { return char })
 
 literal_char
   = (!"'" char:. { return char })

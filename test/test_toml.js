@@ -461,6 +461,18 @@ exports.testMoreComplexQuotedKeyNames = function(test) {
       }
     }
   });
+  // https://github.com/BinaryMuse/toml-node/issues/34
+  test.parsesToml('[table]\n\'a "quoted value"\' = "value"', {
+    table: {
+      'a "quoted value"': "value"
+    }
+  });
+  // https://github.com/BinaryMuse/toml-node/issues/33
+  test.parsesToml('[module]\n"foo=bar" = "zzz"', {
+    module: {
+      "foo=bar": "zzz"
+    }
+  });
 
   test.done();
 };
