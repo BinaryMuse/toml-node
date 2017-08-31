@@ -1,4 +1,8 @@
 [[fruit]]
+name = "durian"
+variety = []
+
+[[fruit]]
 name = "apple"
 
   [fruit.physical]

@@ -72,6 +72,10 @@ var easyTableArrayExpected = {
 var hardTableArrayExpected = {
   "fruit": [
     {
+      "name": "durian",
+      "variety": []
+    },
+    {
       "name": "apple",
       "physical": {
         "color": "red",
