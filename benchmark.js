@@ -74,5 +74,5 @@ Object.keys(times).forEach(key => {
 
   const [rule, type] = key.split('.');
   const {time, count} = times[key];
-  console.log(rule, type, count, time, time/count);
+  console.log(`${rule},${type},${count},${time},${time/count}`);
 })
