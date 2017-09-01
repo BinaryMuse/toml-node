@@ -6,6 +6,7 @@
   "types": "index.d.ts",
   "scripts": {
     "build": "pegjs --cache -o lib/parser.js src/toml.pegjs",
+    "build-trace": "pegjs --cache --trace -o lib/parser.js src/toml.pegjs",
     "test": "jshint lib/compiler.js && nodeunit test/test_*.js",
     "prepublish": "npm run build"
   },
