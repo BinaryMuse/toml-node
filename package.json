@@ -17,8 +17,17 @@
   "author": "Michelle Tilley <michelle@michelletilley.net>",
   "license": "MIT",
   "devDependencies": {
+    "benchmark": "^2.1.4",
+    "deep-equal": "^1.0.1",
+    "glob": "^7.1.2",
+    "ini": "^1.3.4",
+    "js-yaml": "^3.9.1",
     "jshint": "*",
     "nodeunit": "~0.9.0",
-    "pegjs": "~0.8.0"
+    "pegjs": "~0.8.0",
+    "toml-j0.4": "^1.1.1",
+    "upath": "^1.0.0",
+    "yaml": "^0.3.0",
+    "yamljs": "^0.3.0"
   }
 }
