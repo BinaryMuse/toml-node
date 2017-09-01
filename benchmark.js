@@ -3,9 +3,8 @@ var fs = require('fs');
 var data = fs.readFileSync('./test/example.toml', 'utf8');
 
 const NS_PER_SEC = 1e9;
-const toMs = function([a, b]) {
-  const total = a * NS_PER_SEC + b
-  return total / 1000 / 1000
+const toNs = function([a, b]) {
+  return a * NS_PER_SEC + b
 }
 
 const times = {
@@ -25,7 +24,7 @@ function fail(rule) {
   const delta = process.hrtime(last);
   const key = `${rule}.fail`
   times[key] = times[key] || {count: 0, time: 0};
-  times[key].time += toMs(delta)
+  times[key].time += toNs(delta)
   times[key].count++
 }
 
@@ -34,7 +33,7 @@ function match(rule) {
   const delta = process.hrtime(last);
   const key = `${rule}.match`
   times[key] = times[key] || {count: 0, time: 0};
-  times[key].time += toMs(delta)
+  times[key].time += toNs(delta)
   times[key].count++
 }
 
