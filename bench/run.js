@@ -13,7 +13,7 @@ for (let arg of process.argv.slice(2)) {
       onlyParsers.add(p);
     }
   } else {
-    args.push(m);
+    args.push(arg);
   }
 }
 
