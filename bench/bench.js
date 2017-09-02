@@ -61,20 +61,28 @@ const formats = new Set(parsers.map((p) => p.format));
 
 const longestName = parsers.reduce((a, p) => Math.max(a, p.name.length), 0);
 
-function benchAll() {
+function benchAll(onlyParsers) {
   for (let fname of glob.sync(upath.join(__dirname, '*.json'))) {
-    benchOne(fname);
+    benchOne(fname, onlyParsers);
   }
-};
+}
 
-function benchOne(name) {
+function benchOne(name, onlyParsers) {
+  if (onlyParsers && !onlyParsers.size) {
+    onlyParsers = null;
+  }
+
   let suite = new Benchmark.Suite();
   let example = loadExample(name);
   for (let parser of parsers) {
+    if (onlyParsers && !onlyParsers.has(parser.name)) {
+      continue;
+    }
+
     let benchName = `parse ${example.name} with ` + parser.name.padEnd(longestName, ' ');
 
     let input = example[parser.format];
-    if (input == null) {
+    if (input === undefined) {
       console.log(`${benchName} skipped`);
       continue;
     }

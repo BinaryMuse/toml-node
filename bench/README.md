@@ -5,6 +5,9 @@ Multi-parser benchmarks
 
 `node run.js file.json ...` will run just the named benchmarks.
 
+`node run.js parsers=a,b,...` will run just the named parsers. If
+`parsers=` is specified more than once, the values are combined.
+
 Each benchmark is a collection of files that are equivalent
 representations of the same data in different formats:
 
