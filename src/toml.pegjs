@@ -12,10 +12,9 @@
     nodes.push(node);
   }
 
+  // TODO(felix9): remove line, column args after grammar change lands
   function node(type, value, line, column, key) {
-    var obj = { type: type, value: value, line: line(), column: column() };
-    if (key) obj.key = key;
-    return obj;
+    return { type: type, value: value, key: key, offset: offset() };
   }
 
   function convertCodePoint(str, line, col) {
