@@ -1,6 +1,6 @@
 {
   "name": "toml",
-  "version": "2.3.6",
+  "version": "3.0.0",
   "description": "TOML parser for Node.js (parses TOML spec v0.4.0)",
   "main": "index.js",
   "types": "index.d.ts",
