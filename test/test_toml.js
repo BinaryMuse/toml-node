@@ -586,10 +586,10 @@ exports.testErrorsHaveCorrectLineAndColumn = function(test) {
 };
 
 exports.testUsingConstructorAsKey = function(test) {
-  test.parsesToml("[empty]\n[emptier]\n[constructor]\nconstructor = 1\n[emptiest]", {
+  test.parsesToml("[empty]\n[emptier]\n[constructor]\n[emptiest]", {
     "empty": {},
     "emptier": {},
-    "constructor": { "constructor": 1 },
+    "constructor": {},
     "emptiest": {}
   });
   test.done();
