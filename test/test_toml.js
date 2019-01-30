@@ -584,3 +584,13 @@ exports.testErrorsHaveCorrectLineAndColumn = function(test) {
     test.done();
   }
 };
+
+exports.testUsingConstructorAsKey = function(test) {
+  test.parsesToml("[empty]\n[emptier]\n[constructor]\n[emptiest]", {
+    "empty": {},
+    "emptier": {},
+    "constructor": {},
+    "emptiest": {}
+  });
+  test.done();
+};
