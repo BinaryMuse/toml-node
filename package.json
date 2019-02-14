@@ -5,7 +5,8 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "build": "pegjs --cache src/toml.pegjs lib/parser.js",
+    "build": "pegjs --cache -o lib/parser.js src/toml.pegjs",
+    "build-trace": "pegjs --cache --trace -o lib/parser.js src/toml.pegjs",
     "test": "jshint lib/compiler.js && nodeunit test/test_*.js",
     "prepublish": "npm run build"
   },
@@ -19,6 +20,6 @@
   "devDependencies": {
     "jshint": "*",
     "nodeunit": "~0.9.0",
-    "pegjs": "~0.8.0"
+    "pegjs": "~0.10.0"
   }
 }

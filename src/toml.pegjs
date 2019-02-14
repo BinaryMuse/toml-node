@@ -12,13 +12,13 @@
     nodes.push(node);
   }
 
-  function node(type, value, line, column, key) {
-    var obj = { type: type, value: value, line: line(), column: column() };
+  function node(type, value, location, key) {
+    var obj = { type: type, value: value, line: location.start.line, column: location.start.column };
     if (key) obj.key = key;
     return obj;
   }
 
-  function convertCodePoint(str, line, col) {
+  function convertCodePoint(str, location) {
     var num = parseInt("0x" + str);
 
     if (
@@ -28,7 +28,7 @@
       num > 0x10FFFF ||
       (num > 0xD7FF && num < 0xE000)
     ) {
-      genError("Invalid Unicode escape code: " + str, line, col);
+      genError("Invalid Unicode escape code: " + str, location.start.line, location.start.column);
     } else {
       return fromCodePoint(num);
     }
@@ -80,10 +80,10 @@ comment
   = '#' (!(NL / EOF) .)*
 
 path
-  = '[' S* name:table_key S* ']'              { addNode(node('ObjectPath', name, line, column)) }
+  = '[' S* name:table_key S* ']'              { addNode(node('ObjectPath', name, location())) }
 
 tablearray
-  = '[' '[' S* name:table_key S* ']' ']'      { addNode(node('ArrayPath', name, line, column)) }
+  = '[' '[' S* name:table_key S* ']' ']'      { addNode(node('ArrayPath', name, location())) }
 
 table_key
   = parts:dot_ended_table_key_part+ name:table_key_part    { return parts.concat(name) }
@@ -98,8 +98,8 @@ dot_ended_table_key_part
   / S* name:quoted_key S* '.' S*        { return name }
 
 assignment
-  = key:key S* '=' S* value:value        { addNode(node('Assign', value, line, column, key)) }
-  / key:quoted_key S* '=' S* value:value { addNode(node('Assign', value, line, column, key)) }
+  = key:key S* '=' S* value:value        { addNode(node('Assign', value, location(), key)) }
+  / key:quoted_key S* '=' S* value:value { addNode(node('Assign', value, location(), key)) }
 
 key
   = chars:ASCII_BASIC+ { return chars.join('') }
@@ -118,13 +118,13 @@ string
   / single_quoted_single_line_string
 
 double_quoted_multiline_string
-  = '"""' NL? chars:multiline_string_char* '"""'  { return node('String', chars.join(''), line, column) }
+  = '"""' NL? chars:multiline_string_char* '"""'  { return node('String', chars.join(''), location()) }
 double_quoted_single_line_string
-  = '"' chars:string_char* '"'                    { return node('String', chars.join(''), line, column) }
+  = '"' chars:string_char* '"'                    { return node('String', chars.join(''), location()) }
 single_quoted_multiline_string
-  = "'''" NL? chars:multiline_literal_char* "'''" { return node('String', chars.join(''), line, column) }
+  = "'''" NL? chars:multiline_literal_char* "'''" { return node('String', chars.join(''), location()) }
 single_quoted_single_line_string
-  = "'" chars:literal_char* "'"                   { return node('String', chars.join(''), line, column) }
+  = "'" chars:literal_char* "'"                   { return node('String', chars.join(''), location()) }
 
 string_char
   = ESCAPED / (!'"' char:. { return char })
@@ -142,29 +142,29 @@ multiline_literal_char
   = (!"'''" char:. { return char })
 
 float
-  = left:(float_text / integer_text) ('e' / 'E') right:integer_text { return node('Float', parseFloat(left + 'e' + right), line, column) }
-  / text:float_text                                                 { return node('Float', parseFloat(text), line, column) }
+  = left:(float_text / integer_text) ('e' / 'E') right:integer_text { return node('Float', parseFloat(left + 'e' + right), location()) }
+  / text:float_text                                                 { return node('Float', parseFloat(text), location()) }
 
 float_text
   = '+'? digits:(DIGITS '.' DIGITS)     { return digits.join('') }
   / '-'  digits:(DIGITS '.' DIGITS)     { return '-' + digits.join('') }
 
 integer
-  = text:integer_text                   { return node('Integer', parseInt(text, 10), line, column) }
+  = text:integer_text                   { return node('Integer', parseInt(text, 10), location()) }
 
 integer_text
   = '+'? digits:DIGIT+ !'.'             { return digits.join('') }
   / '-'  digits:DIGIT+ !'.'             { return '-' + digits.join('') }
 
 boolean
-  = 'true'                              { return node('Boolean', true, line, column) }
-  / 'false'                             { return node('Boolean', false, line, column) }
+  = 'true'                              { return node('Boolean', true, location()) }
+  / 'false'                             { return node('Boolean', false, location()) }
 
 array
-  = '[' array_sep* ']'                                 { return node('Array', [], line, column) }
-  / '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], line, column) }
-  / '[' values:array_value_list+ ']'                   { return node('Array', values, line, column) }
-  / '[' values:array_value_list+ value:array_value ']' { return node('Array', values.concat(value), line, column) }
+  = '[' array_sep* ']'                                 { return node('Array', [], location()) }
+  / '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], location()) }
+  / '[' values:array_value_list+ ']'                   { return node('Array', values, location()) }
+  / '[' values:array_value_list+ value:array_value ']' { return node('Array', values.concat(value), location()) }
 
 array_value
   = array_sep* value:value array_sep*                  { return value }
@@ -176,11 +176,11 @@ array_sep
   = S / NL / comment
 
 inline_table
-  = '{' S* values:inline_table_assignment* S* '}'      { return node('InlineTable', values, line, column) }
+  = '{' S* values:inline_table_assignment* S* '}'      { return node('InlineTable', values, location()) }
 
 inline_table_assignment
-  = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, line, column, key) }
-  / S* key:key S* '=' S* value:value                   { return node('InlineTableValue', value, line, column, key) }
+  = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, location(), key) }
+  / S* key:key S* '=' S* value:value                   { return node('InlineTableValue', value, location(), key) }
 
 secfragment
   = '.' digits:DIGITS                                  { return "." + digits }
@@ -205,8 +205,8 @@ time_with_offset
     )                                                               { return time.join('') }
 
 datetime
-  = date:date 'T' time:time 'Z'               { return node('Date', new Date(date + "T" + time + "Z"), line, column) }
-  / date:date 'T' time:time_with_offset       { return node('Date', new Date(date + "T" + time), line, column) }
+  = date:date 'T' time:time 'Z'               { return node('Date', new Date(date + "T" + time + "Z"), location()) }
+  / date:date 'T' time:time_with_offset       { return node('Date', new Date(date + "T" + time), location()) }
 
 
 S                = [ \t]
@@ -227,5 +227,5 @@ ESCAPED          = '\\"'                { return '"'  }
                  / '\\f'                { return '\f' }
                  / '\\r'                { return '\r' }
                  / ESCAPED_UNICODE
-ESCAPED_UNICODE  = "\\U" digits:(HEX HEX HEX HEX HEX HEX HEX HEX) { return convertCodePoint(digits.join('')) }
-                 / "\\u" digits:(HEX HEX HEX HEX) { return convertCodePoint(digits.join('')) }
+ESCAPED_UNICODE  = "\\U" digits:(HEX HEX HEX HEX HEX HEX HEX HEX) { return convertCodePoint(digits.join(''), location()) }
+                 / "\\u" digits:(HEX HEX HEX HEX) { return convertCodePoint(digits.join(''), location()) }
