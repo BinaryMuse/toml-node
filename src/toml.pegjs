@@ -1,3 +1,5 @@
+// This grammar assumes \r\n has been normalized to \n.
+
 {
   var nodes = [];
 
@@ -69,77 +71,75 @@ start
   = line*                               { return nodes }
 
 line
-  = S* expr:expression S* comment* (NL+ / EOF)
-  / S+ (NL+ / EOF)
-  / NL
-
-expression
-  = comment / path / tablearray / assignment
+  = WS ( expression WS comment? "\n"?
+       / comment "\n"?
+       / "\n" )
 
 comment
-  = '#' (!(NL / EOF) .)*
+  = '#' [^\n]*
+
+expression
+  = path / tablearray / assignment
 
 path
-  = '[' S* name:table_key S* ']'              { addNode(node('ObjectPath', name, line, column)) }
+  = '[' name:table_key ']'              { addNode(node('ObjectPath', name, line, column)) }
 
 tablearray
-  = '[' '[' S* name:table_key S* ']' ']'      { addNode(node('ArrayPath', name, line, column)) }
+  = '[[' name:table_key ']]'            { addNode(node('ArrayPath', name, line, column)) }
 
 table_key
-  = parts:dot_ended_table_key_part+ name:table_key_part    { return parts.concat(name) }
-  / name:table_key_part                                    { return [name] }
+  = WS first:table_key_part
+    WS rest:('.' WS part:table_key_part WS { return part })*
+                                        { return [first].concat(rest) }
 
 table_key_part
-  = S* name:key S*                      { return name }
-  / S* name:quoted_key S*               { return name }
-
-dot_ended_table_key_part
-  = S* name:key S* '.' S*               { return name }
-  / S* name:quoted_key S* '.' S*        { return name }
+  = key / quoted_key
 
 assignment
-  = key:key S* '=' S* value:value        { addNode(node('Assign', value, line, column, key)) }
-  / key:quoted_key S* '=' S* value:value { addNode(node('Assign', value, line, column, key)) }
+  = key:key WS '=' WS value:value       { addNode(node('Assign', value, line, column, key)) }
+  / key:quoted_key WS '=' WS value:value { addNode(node('Assign', value, line, column, key)) }
 
 key
-  = chars:ASCII_BASIC+ { return chars.join('') }
+  = ASCII_BASIC
 
 quoted_key
-  = node:double_quoted_single_line_string { return node.value }
-  / node:single_quoted_single_line_string { return node.value }
+  = double_quoted_single_line_string
+  / single_quoted_single_line_string
 
 value
   = string / datetime / float / integer / boolean / array / inline_table
 
 string
-  = double_quoted_multiline_string
-  / double_quoted_single_line_string
-  / single_quoted_multiline_string
-  / single_quoted_single_line_string
+  = chars:( double_quoted_multiline_string
+          / double_quoted_single_line_string
+          / single_quoted_multiline_string
+          / single_quoted_single_line_string )
+                                        { return node('String', chars, line, column) }
 
 double_quoted_multiline_string
-  = '"""' NL? chars:multiline_string_char* '"""'  { return node('String', chars.join(''), line, column) }
+  = '"""' "\n"?
+    chars:multiline_string_chars
+    '"""'                               { return chars.join('') }
+
 double_quoted_single_line_string
-  = '"' chars:string_char* '"'                    { return node('String', chars.join(''), line, column) }
+  = '"' chars:( [^"\\] / ESCAPED )* '"' { return chars.join('') }
+
 single_quoted_multiline_string
-  = "'''" NL? chars:multiline_literal_char* "'''" { return node('String', chars.join(''), line, column) }
+  = "'''" "\n"?
+    chars:multiline_literal_chars
+    "'''"                               { return chars.join('') }
+
 single_quoted_single_line_string
-  = "'" chars:literal_char* "'"                   { return node('String', chars.join(''), line, column) }
+  = "'" chars:[^']* "'"                 { return chars.join('') }
 
-string_char
-  = ESCAPED / (!'"' char:. { return char })
-
-literal_char
-  = (!"'" char:. { return char })
-
-multiline_string_char
-  = ESCAPED / multiline_string_delim / (!'"""' char:. { return char})
+multiline_string_chars
+  = ( [^"\\] / multiline_string_delim / ESCAPED / !'"""' c:. { return c } )*
 
 multiline_string_delim
-  = '\\' NL NLS*                        { return '' }
+  = '\\\n' [ \t\n]*                     { return '' }
 
-multiline_literal_char
-  = (!"'''" char:. { return char })
+multiline_literal_chars
+  = ( [^'] / !"'''" c:. { return c } )*
 
 float
   = left:(float_text / integer_text) ('e' / 'E') right:integer_text { return node('Float', parseFloat(left + 'e' + right), line, column) }
@@ -153,37 +153,37 @@ integer
   = text:integer_text                   { return node('Integer', parseInt(text, 10), line, column) }
 
 integer_text
-  = '+'? digits:DIGIT+ !'.'             { return digits.join('') }
-  / '-'  digits:DIGIT+ !'.'             { return '-' + digits.join('') }
+  = '+'? digits:DIGITS !'.'             { return digits }
+  / '-'  digits:DIGITS !'.'             { return '-' + digits }
 
 boolean
   = 'true'                              { return node('Boolean', true, line, column) }
   / 'false'                             { return node('Boolean', false, line, column) }
 
 array
-  = '[' array_sep* ']'                                 { return node('Array', [], line, column) }
+  = '[' array_WS ']'                                   { return node('Array', [], line, column) }
   / '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], line, column) }
   / '[' values:array_value_list+ ']'                   { return node('Array', values, line, column) }
   / '[' values:array_value_list+ value:array_value ']' { return node('Array', values.concat(value), line, column) }
 
 array_value
-  = array_sep* value:value array_sep*                  { return value }
+  = array_WS value:value array_WS               { return value }
 
 array_value_list
-  = array_sep* value:value array_sep* ',' array_sep*   { return value }
+  = array_WS value:value array_WS ',' array_WS  { return value }
 
-array_sep
-  = S / NL / comment
+array_WS
+  = WS ( comment? "\n" WS )*
 
 inline_table
-  = '{' S* values:inline_table_assignment* S* '}'      { return node('InlineTable', values, line, column) }
+  = '{' WS values:inline_table_assignment* WS '}'   { return node('InlineTable', values, line, column) }
 
 inline_table_assignment
-  = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, line, column, key) }
-  / S* key:key S* '=' S* value:value                   { return node('InlineTableValue', value, line, column, key) }
+  = WS key:key WS '=' WS value:value WS ',' WS      { return node('InlineTableValue', value, line, column, key) }
+  / WS key:key WS '=' WS value:value                { return node('InlineTableValue', value, line, column, key) }
 
 secfragment
-  = '.' digits:DIGITS                                  { return "." + digits }
+  = '.' digits:DIGITS                               { return "." + digits }
 
 date
   = date:(
@@ -192,7 +192,7 @@ date
       DIGIT DIGIT
       '-'
       DIGIT DIGIT
-    )                                                               { return  date.join('') }
+    )                                                               { return date.join('') }
 
 time
   = time:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?) { return time.join('') }
@@ -208,17 +208,14 @@ datetime
   = date:date 'T' time:time 'Z'               { return node('Date', new Date(date + "T" + time + "Z"), line, column) }
   / date:date 'T' time:time_with_offset       { return node('Date', new Date(date + "T" + time), line, column) }
 
-
-S                = [ \t]
-NL               = "\n" / "\r" "\n"
-NLS              = NL / S
-EOF              = !.
+WS               = [ \t]*
 HEX              = [0-9a-f]i
-DIGIT            = DIGIT_OR_UNDER
-DIGIT_OR_UNDER   = [0-9]
-                 / '_'                  { return "" }
-ASCII_BASIC      = [A-Za-z0-9_\-]
-DIGITS           = d:DIGIT_OR_UNDER+    { return d.join('') }
+DIGIT            = [0-9]
+
+ASCII_BASIC      = [A-Za-z0-9_\-]+      { return text() }
+
+DIGITS           = [0-9_]+              { return text().replace(/_/g, '') }
+
 ESCAPED          = '\\"'                { return '"'  }
                  / '\\\\'               { return '\\' }
                  / '\\b'                { return '\b' }
@@ -226,6 +223,8 @@ ESCAPED          = '\\"'                { return '"'  }
                  / '\\n'                { return '\n' }
                  / '\\f'                { return '\f' }
                  / '\\r'                { return '\r' }
-                 / ESCAPED_UNICODE
-ESCAPED_UNICODE  = "\\U" digits:(HEX HEX HEX HEX HEX HEX HEX HEX) { return convertCodePoint(digits.join('')) }
-                 / "\\u" digits:(HEX HEX HEX HEX) { return convertCodePoint(digits.join('')) }
+                 / '\\U' digits:(HEX HEX HEX HEX HEX HEX HEX HEX)
+                                        { return convertCodePoint(digits.join('')) }
+                 / '\\u' digits:(HEX HEX HEX HEX)
+                                        { return convertCodePoint(digits.join('')) }
+                 / '\\'
