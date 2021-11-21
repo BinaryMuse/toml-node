@@ -45,6 +45,15 @@ try {
 }
 ```
 
+In TypeScript you can tell what's the type of the parsed data like so:
+
+```typescript
+var toml = require('toml');
+type MyData = { foo: number };
+var data = toml.parse<MyData>(someTomlString);
+console.dir(data);
+```
+
 ### Streaming
 
 As of toml-node version 1.0, the streaming interface has been removed. Instead, use a module like [concat-stream](https://npmjs.org/package/concat-stream):
