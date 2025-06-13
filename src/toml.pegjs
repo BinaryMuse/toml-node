@@ -181,6 +181,8 @@ inline_table
 inline_table_assignment
   = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, line, column, key) }
   / S* key:key S* '=' S* value:value                   { return node('InlineTableValue', value, line, column, key) }
+  / S* key:quoted_key S* '=' S* value:value S* ',' S*  { return node('InlineTableValue', value, line, column, key) }
+  / S* key:quoted_key S* '=' S* value:value            { return node('InlineTableValue', value, line, column, key) }
 
 secfragment
   = '.' digits:DIGITS                                  { return "." + digits }
