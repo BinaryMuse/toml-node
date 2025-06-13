@@ -594,3 +594,13 @@ exports.testUsingConstructorAsKey = function(test) {
   });
   test.done();
 };
+
+exports.testQuotedKeysWithInlineTableAssignment = function(test) {
+  test.parsesToml("test = { \"key\" = \"value\" }", {
+    "test": { "key": "value" }
+  });
+  test.parsesToml("test = { \"key1\" = \"value1\", \"key2\" = \"value2\" }", {
+    "test": { "key1": "value1", "key2": "value2" }
+  });
+  test.done();
+}
