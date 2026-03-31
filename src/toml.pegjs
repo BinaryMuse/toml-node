@@ -65,6 +65,17 @@
     }
   }
 
+  function isControlChar(ch) {
+    var code = ch.charCodeAt(0);
+    return (code >= 0x00 && code <= 0x08) || (code >= 0x0A && code <= 0x1F) || code === 0x7F;
+  }
+
+  function isControlCharMultiline(ch) {
+    var code = ch.charCodeAt(0);
+    // Same as isControlChar but allows newline (0x0A) and carriage return (0x0D)
+    return (code >= 0x00 && code <= 0x08) || (code >= 0x0B && code <= 0x0C) || (code >= 0x0E && code <= 0x1F) || code === 0x7F;
+  }
+
   function stripUnderscores(str) {
     return str.replace(/_/g, '');
   }
@@ -128,7 +139,7 @@ expression
   = comment / path / tablearray / assignment
 
 comment
-  = '#' (!(NL / EOF) .)*
+  = '#' (!(NL / EOF) char:. { if (isControlChar(char)) genError("Control characters are not allowed in comments", location().start.line, location().start.column); return char })*
 
 path
   = '[' S* name:table_key S* ']'              { addNode(node('ObjectPath', name, location())) }
@@ -168,28 +179,69 @@ string
   / single_quoted_single_line_string
 
 double_quoted_multiline_string
-  = '"""' NL? chars:multiline_string_char* '"""'  { return node('String', chars.join(''), location()) }
+  = '"""' NL? body:mlb_body '"""'       { return node('String', body, location()) }
+
 double_quoted_single_line_string
-  = '"' chars:string_char* '"'                    { return node('String', chars.join(''), location()) }
+  = '"' chars:string_char* '"'          { return node('String', chars.join(''), location()) }
+
 single_quoted_multiline_string
-  = "'''" NL? chars:multiline_literal_char* "'''" { return node('String', chars.join(''), location()) }
+  = "'''" NL? body:mll_body "'''"       { return node('String', body, location()) }
+
 single_quoted_single_line_string
-  = "'" chars:literal_char* "'"                   { return node('String', chars.join(''), location()) }
+  = "'" chars:literal_char* "'"         { return node('String', chars.join(''), location()) }
+
+// Multiline basic string body — follows the ABNF:
+// *mlb-content *( mlb-quotes 1*mlb-content ) [ mlb-quotes ]
+mlb_body
+  = head:mlb_content* parts:(mlb_quotes mlb_content+)* tail:mlb_trailing? {
+      var result = head.join('');
+      for (var i = 0; i < parts.length; i++) { result += parts[i][0] + parts[i][1].join(''); }
+      return result + (tail || '');
+    }
+
+mlb_content
+  = ESCAPED
+  / mlb_escaped_newline
+  / '\\' . { genError("Invalid escape sequence", location().start.line, location().start.column) }
+  / !'"' char:. { if (isControlCharMultiline(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
+
+mlb_escaped_newline
+  = '\\' S* NL NLS*                     { return '' }
+
+mlb_quotes
+  = '""' !'"'                            { return '""' }
+  / '"' !'"'                             { return '"' }
+
+mlb_trailing
+  = '""' &'"""'                          { return '""' }
+  / '"' &'"""'                           { return '"' }
+
+// Multiline literal string body
+mll_body
+  = head:mll_content* parts:(mll_quotes mll_content+)* tail:mll_trailing? {
+      var result = head.join('');
+      for (var i = 0; i < parts.length; i++) { result += parts[i][0] + parts[i][1].join(''); }
+      return result + (tail || '');
+    }
+
+mll_content
+  = !"'" char:. { if (isControlCharMultiline(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
+
+mll_quotes
+  = "''" !"'"                            { return "''" }
+  / "'" !"'"                             { return "'" }
+
+mll_trailing
+  = "''" &"'''"                          { return "''" }
+  / "'" &"'''"                           { return "'" }
 
 string_char
-  = ESCAPED / (!'"' char:. { return char })
+  = ESCAPED
+  / '\\' . { genError("Invalid escape sequence", location().start.line, location().start.column) }
+  / !'"' !(NL / EOF) char:. { if (isControlChar(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
 
 literal_char
-  = (!"'" char:. { return char })
-
-multiline_string_char
-  = ESCAPED / multiline_string_delim / (!'"""' char:. { return char})
-
-multiline_string_delim
-  = '\\' NL NLS*                        { return '' }
-
-multiline_literal_char
-  = (!"'''" char:. { return char })
+  = !"'" !(NL / EOF) char:. { if (isControlChar(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
 
 float
   = sign:[+-]? 'inf'                                  { return node('Float', sign === '-' ? -Infinity : Infinity, location()) }
@@ -294,7 +346,7 @@ offset
   / sign:[+-] h:(DIGIT DIGIT) ':' m:(DIGIT DIGIT)     { return sign + h.join('') + ":" + m.join('') }
 
 datetime_delim
-  = 'T'i / ' '
+  = 'T'i / ' ' &DIGIT
 
 datetime
   = d:date_part datetime_delim t:time_part o:offset    { validateDate(d, location()); validateTime(t, location()); validateOffset(o, location()); return node('Date', new Date(d + "T" + t + o), location()) }
