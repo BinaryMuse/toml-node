@@ -4,6 +4,11 @@
   "description": "TOML parser for Node.js (TOML v1.0.0 compliant)",
   "main": "index.js",
   "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "lib/"
+  ],
   "engines": {
     "node": ">=20"
   },
