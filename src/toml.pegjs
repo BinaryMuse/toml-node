@@ -98,8 +98,7 @@ dot_ended_table_key_part
   / S* name:quoted_key S* '.' S*        { return name }
 
 assignment
-  = key:key S* '=' S* value:value        { addNode(node('Assign', value, location(), key)) }
-  / key:quoted_key S* '=' S* value:value { addNode(node('Assign', value, location(), key)) }
+  = keys:inline_key S* '=' S* value:value { addNode(node('Assign', value, location(), keys)) }
 
 key
   = chars:ASCII_BASIC+ { return chars.join('') }
@@ -176,11 +175,26 @@ array_sep
   = S / NL / comment
 
 inline_table
-  = '{' S* values:inline_table_assignment* S* '}'      { return node('InlineTable', values, location()) }
+  = '{' S* '}'                                                            { return node('InlineTable', [], location()) }
+  / '{' S* entries:inline_table_entry_list S* last:inline_table_entry S* '}' { return node('InlineTable', entries.concat(last), location()) }
+  / '{' S* entry:inline_table_entry S* '}'                                { return node('InlineTable', [entry], location()) }
 
-inline_table_assignment
-  = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, location(), key) }
-  / S* key:key S* '=' S* value:value                   { return node('InlineTableValue', value, location(), key) }
+inline_table_entry_list
+  = entries:(S* e:inline_table_entry S* ',' { return e })+                { return entries }
+
+inline_table_entry
+  = keys:inline_key S* '=' S* value:value                                { return node('InlineTableValue', value, location(), keys) }
+
+inline_key
+  = parts:inline_dot_key_part+ S* last:simple_key                        { return parts.concat(last) }
+  / k:simple_key                                                         { return [k] }
+
+inline_dot_key_part
+  = S* k:simple_key S* '.'                                               { return k }
+
+simple_key
+  = key
+  / quoted_key
 
 secfragment
   = '.' digits:DIGITS                                  { return "." + digits }

@@ -399,10 +399,8 @@ describe("error handling", function () {
     });
   });
 
-  it("rejects array type mismatch", function () {
-    assert.throws(function () {
-      toml.parse('data = [1, 2, "test"]');
-    });
+  it("allows mixed-type arrays (TOML v1.0.0)", function () {
+    parsesToml('data = [1, 2, "test"]', { data: [1, 2, "test"] });
   });
 
   it("rejects bad inputs", function () {
