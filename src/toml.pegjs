@@ -12,10 +12,72 @@
     nodes.push(node);
   }
 
-  function node(type, value, line, column, key) {
-    var obj = { type: type, value: value, line: line(), column: column() };
+  function node(type, value, loc, key) {
+    var obj = { type: type, value: value, line: loc.start.line, column: loc.start.column };
     if (key) obj.key = key;
     return obj;
+  }
+
+  function validateDate(dateStr, loc) {
+    var parts = dateStr.split('-');
+    var year = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10);
+    var day = parseInt(parts[2], 10);
+    if (month < 1 || month > 12) {
+      genError("Invalid date: month " + month + " out of range.", loc.start.line, loc.start.column);
+    }
+    var maxDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) {
+      maxDays[1] = 29;
+    }
+    if (day < 1 || day > maxDays[month - 1]) {
+      genError("Invalid date: day " + day + " out of range for month " + month + ".", loc.start.line, loc.start.column);
+    }
+  }
+
+  function validateTime(timeStr, loc) {
+    var base = timeStr.split('.')[0];
+    var parts = base.split(':');
+    var hour = parseInt(parts[0], 10);
+    var minute = parseInt(parts[1], 10);
+    var second = parseInt(parts[2], 10);
+    if (hour > 23) {
+      genError("Invalid time: hour " + hour + " out of range.", loc.start.line, loc.start.column);
+    }
+    if (minute > 59) {
+      genError("Invalid time: minute " + minute + " out of range.", loc.start.line, loc.start.column);
+    }
+    if (second > 59) {
+      genError("Invalid time: second " + second + " out of range.", loc.start.line, loc.start.column);
+    }
+  }
+
+  function validateOffset(offsetStr, loc) {
+    if (offsetStr === "Z") return;
+    var parts = offsetStr.substring(1).split(':');
+    var hour = parseInt(parts[0], 10);
+    var minute = parseInt(parts[1], 10);
+    if (hour > 23) {
+      genError("Invalid offset: hour " + hour + " out of range.", loc.start.line, loc.start.column);
+    }
+    if (minute > 59) {
+      genError("Invalid offset: minute " + minute + " out of range.", loc.start.line, loc.start.column);
+    }
+  }
+
+  function isControlChar(ch) {
+    var code = ch.charCodeAt(0);
+    return (code >= 0x00 && code <= 0x08) || (code >= 0x0A && code <= 0x1F) || code === 0x7F;
+  }
+
+  function isControlCharMultiline(ch) {
+    var code = ch.charCodeAt(0);
+    // Same as isControlChar but allows newline (0x0A) and carriage return (0x0D)
+    return (code >= 0x00 && code <= 0x08) || (code >= 0x0B && code <= 0x0C) || (code >= 0x0E && code <= 0x1F) || code === 0x7F;
+  }
+
+  function stripUnderscores(str) {
+    return str.replace(/_/g, '');
   }
 
   function convertCodePoint(str, line, col) {
@@ -77,13 +139,13 @@ expression
   = comment / path / tablearray / assignment
 
 comment
-  = '#' (!(NL / EOF) .)*
+  = '#' (!(NL / EOF) char:. { if (isControlChar(char)) genError("Control characters are not allowed in comments", location().start.line, location().start.column); return char })*
 
 path
-  = '[' S* name:table_key S* ']'              { addNode(node('ObjectPath', name, line, column)) }
+  = '[' S* name:table_key S* ']'              { addNode(node('ObjectPath', name, location())) }
 
 tablearray
-  = '[' '[' S* name:table_key S* ']' ']'      { addNode(node('ArrayPath', name, line, column)) }
+  = '[' '[' S* name:table_key S* ']' ']'      { addNode(node('ArrayPath', name, location())) }
 
 table_key
   = parts:dot_ended_table_key_part+ name:table_key_part    { return parts.concat(name) }
@@ -98,8 +160,7 @@ dot_ended_table_key_part
   / S* name:quoted_key S* '.' S*        { return name }
 
 assignment
-  = key:key S* '=' S* value:value        { addNode(node('Assign', value, line, column, key)) }
-  / key:quoted_key S* '=' S* value:value { addNode(node('Assign', value, line, column, key)) }
+  = keys:inline_key S* '=' S* value:value { addNode(node('Assign', value, location(), keys)) }
 
 key
   = chars:ASCII_BASIC+ { return chars.join('') }
@@ -118,53 +179,127 @@ string
   / single_quoted_single_line_string
 
 double_quoted_multiline_string
-  = '"""' NL? chars:multiline_string_char* '"""'  { return node('String', chars.join(''), line, column) }
+  = '"""' NL? body:mlb_body '"""'       { return node('String', body, location()) }
+
 double_quoted_single_line_string
-  = '"' chars:string_char* '"'                    { return node('String', chars.join(''), line, column) }
+  = '"' chars:string_char* '"'          { return node('String', chars.join(''), location()) }
+
 single_quoted_multiline_string
-  = "'''" NL? chars:multiline_literal_char* "'''" { return node('String', chars.join(''), line, column) }
+  = "'''" NL? body:mll_body "'''"       { return node('String', body, location()) }
+
 single_quoted_single_line_string
-  = "'" chars:literal_char* "'"                   { return node('String', chars.join(''), line, column) }
+  = "'" chars:literal_char* "'"         { return node('String', chars.join(''), location()) }
+
+// Multiline basic string body — follows the ABNF:
+// *mlb-content *( mlb-quotes 1*mlb-content ) [ mlb-quotes ]
+mlb_body
+  = head:mlb_content* parts:(mlb_quotes mlb_content+)* tail:mlb_trailing? {
+      var result = head.join('');
+      for (var i = 0; i < parts.length; i++) { result += parts[i][0] + parts[i][1].join(''); }
+      return result + (tail || '');
+    }
+
+mlb_content
+  = ESCAPED
+  / mlb_escaped_newline
+  / '\\' . { genError("Invalid escape sequence", location().start.line, location().start.column) }
+  / !'"' char:. { if (isControlCharMultiline(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
+
+mlb_escaped_newline
+  = '\\' S* NL NLS*                     { return '' }
+
+mlb_quotes
+  = '""' !'"'                            { return '""' }
+  / '"' !'"'                             { return '"' }
+
+mlb_trailing
+  = '""' &'"""'                          { return '""' }
+  / '"' &'"""'                           { return '"' }
+
+// Multiline literal string body
+mll_body
+  = head:mll_content* parts:(mll_quotes mll_content+)* tail:mll_trailing? {
+      var result = head.join('');
+      for (var i = 0; i < parts.length; i++) { result += parts[i][0] + parts[i][1].join(''); }
+      return result + (tail || '');
+    }
+
+mll_content
+  = !"'" char:. { if (isControlCharMultiline(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
+
+mll_quotes
+  = "''" !"'"                            { return "''" }
+  / "'" !"'"                             { return "'" }
+
+mll_trailing
+  = "''" &"'''"                          { return "''" }
+  / "'" &"'''"                           { return "'" }
 
 string_char
-  = ESCAPED / (!'"' char:. { return char })
+  = ESCAPED
+  / '\\' . { genError("Invalid escape sequence", location().start.line, location().start.column) }
+  / !'"' !(NL / EOF) char:. { if (isControlChar(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
 
 literal_char
-  = (!"'" char:. { return char })
-
-multiline_string_char
-  = ESCAPED / multiline_string_delim / (!'"""' char:. { return char})
-
-multiline_string_delim
-  = '\\' NL NLS*                        { return '' }
-
-multiline_literal_char
-  = (!"'''" char:. { return char })
+  = !"'" !(NL / EOF) char:. { if (isControlChar(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
 
 float
-  = left:(float_text / integer_text) ('e' / 'E') right:integer_text { return node('Float', parseFloat(left + 'e' + right), line, column) }
-  / text:float_text                                                 { return node('Float', parseFloat(text), line, column) }
+  = sign:[+-]? 'inf'                                  { return node('Float', sign === '-' ? -Infinity : Infinity, location()) }
+  / sign:[+-]? 'nan'                                  { return node('Float', NaN, location()) }
+  / left:float_or_int_text [eE] right:float_exp_text  { return node('Float', parseFloat(stripUnderscores(left + 'e' + right)), location()) }
+  / text:float_text                                   { return node('Float', parseFloat(stripUnderscores(text)), location()) }
 
 float_text
-  = '+'? digits:(DIGITS '.' DIGITS)     { return digits.join('') }
-  / '-'  digits:(DIGITS '.' DIGITS)     { return '-' + digits.join('') }
+  = sign:[+-]? digits:FLOAT_DEC_INT '.' frac:DEC_INT  { return (sign === '-' ? '-' : '') + digits + '.' + frac }
+
+float_or_int_text
+  = sign:[+-]? digits:FLOAT_DEC_INT '.' frac:DEC_INT  { return (sign === '-' ? '-' : '') + digits + '.' + frac }
+  / sign:[+-]? digits:FLOAT_DEC_INT                    { return (sign === '-' ? '-' : '') + digits }
+
+// Integer part of floats follows same no-leading-zero rule as integers
+FLOAT_DEC_INT
+  = '0' { return '0' }
+  / DEC_INT_NOZERO
+
+float_exp_text
+  = sign:[+-]? digits:DEC_INT                          { return (sign || '') + digits }
 
 integer
-  = text:integer_text                   { return node('Integer', parseInt(text, 10), line, column) }
+  = '0x' digits:HEX_INT                               { return node('Integer', parseInt(stripUnderscores(digits), 16), location()) }
+  / '0o' digits:OCT_INT                                { return node('Integer', parseInt(stripUnderscores(digits), 8), location()) }
+  / '0b' digits:BIN_INT                                { return node('Integer', parseInt(stripUnderscores(digits), 2), location()) }
+  / text:dec_integer_text                              { return node('Integer', parseInt(stripUnderscores(text), 10), location()) }
 
-integer_text
-  = '+'? digits:DIGIT+ !'.'             { return digits.join('') }
-  / '-'  digits:DIGIT+ !'.'             { return '-' + digits.join('') }
+dec_integer_text
+  = sign:[+-]? '0' !([0-9_]) !'.'                     { return (sign || '') + '0' }
+  / sign:[+-]? digits:DEC_INT_NOZERO !'.'             { return (sign || '') + digits }
+
+DEC_INT_NOZERO
+  = head:[1-9] tail:([_]? [0-9])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+// Digit sequences with underscore validation:
+// - Underscores must be between digits (not leading, trailing, or consecutive)
+DEC_INT
+  = head:[0-9] tail:([_]? [0-9])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+HEX_INT
+  = head:[0-9a-fA-F] tail:([_]? [0-9a-fA-F])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+OCT_INT
+  = head:[0-7] tail:([_]? [0-7])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+BIN_INT
+  = head:[01] tail:([_]? [01])* { return head + tail.map(function(p) { return p.join('') }).join('') }
 
 boolean
-  = 'true'                              { return node('Boolean', true, line, column) }
-  / 'false'                             { return node('Boolean', false, line, column) }
+  = 'true'                              { return node('Boolean', true, location()) }
+  / 'false'                             { return node('Boolean', false, location()) }
 
 array
-  = '[' array_sep* ']'                                 { return node('Array', [], line, column) }
-  / '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], line, column) }
-  / '[' values:array_value_list+ ']'                   { return node('Array', values, line, column) }
-  / '[' values:array_value_list+ value:array_value ']' { return node('Array', values.concat(value), line, column) }
+  = '[' array_sep* ']'                                 { return node('Array', [], location()) }
+  / '[' value:array_value? ']'                         { return node('Array', value ? [value] : [], location()) }
+  / '[' values:array_value_list+ ']'                   { return node('Array', values, location()) }
+  / '[' values:array_value_list+ value:array_value ']' { return node('Array', values.concat(value), location()) }
 
 array_value
   = array_sep* value:value array_sep*                  { return value }
@@ -176,49 +311,57 @@ array_sep
   = S / NL / comment
 
 inline_table
-  = '{' S* values:inline_table_assignment* S* '}'      { return node('InlineTable', values, line, column) }
+  = '{' S* '}'                                                            { return node('InlineTable', [], location()) }
+  / '{' S* entries:inline_table_entry_list S* last:inline_table_entry S* '}' { return node('InlineTable', entries.concat(last), location()) }
+  / '{' S* entry:inline_table_entry S* '}'                                { return node('InlineTable', [entry], location()) }
 
-inline_table_assignment
-  = S* key:key S* '=' S* value:value S* ',' S*         { return node('InlineTableValue', value, line, column, key) }
-  / S* key:key S* '=' S* value:value                   { return node('InlineTableValue', value, line, column, key) }
+inline_table_entry_list
+  = entries:(S* e:inline_table_entry S* ',' { return e })+                { return entries }
+
+inline_table_entry
+  = keys:inline_key S* '=' S* value:value                                { return node('InlineTableValue', value, location(), keys) }
+
+inline_key
+  = parts:inline_dot_key_part+ S* last:simple_key                        { return parts.concat(last) }
+  / k:simple_key                                                         { return [k] }
+
+inline_dot_key_part
+  = S* k:simple_key S* '.'                                               { return k }
+
+simple_key
+  = key
+  / quoted_key
 
 secfragment
-  = '.' digits:DIGITS                                  { return "." + digits }
+  = '.' digits:DIGIT+                                  { return "." + digits.join('') }
 
-date
-  = date:(
-      DIGIT DIGIT DIGIT DIGIT
-      '-'
-      DIGIT DIGIT
-      '-'
-      DIGIT DIGIT
-    )                                                               { return  date.join('') }
+date_part
+  = d:(DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT)  { return d.join('') }
 
-time
-  = time:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?) { return time.join('') }
+time_part
+  = t:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?) { return t.join('') }
 
-time_with_offset
-  = time:(
-      DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?
-      ('-' / '+')
-      DIGIT DIGIT ':' DIGIT DIGIT
-    )                                                               { return time.join('') }
+offset
+  = 'Z'i                                              { return "Z" }
+  / sign:[+-] h:(DIGIT DIGIT) ':' m:(DIGIT DIGIT)     { return sign + h.join('') + ":" + m.join('') }
+
+datetime_delim
+  = 'T'i / ' ' &DIGIT
 
 datetime
-  = date:date 'T' time:time 'Z'               { return node('Date', new Date(date + "T" + time + "Z"), line, column) }
-  / date:date 'T' time:time_with_offset       { return node('Date', new Date(date + "T" + time), line, column) }
+  = d:date_part datetime_delim t:time_part o:offset    { validateDate(d, location()); validateTime(t, location()); validateOffset(o, location()); return node('Date', new Date(d + "T" + t + o), location()) }
+  / d:date_part datetime_delim t:time_part             { validateDate(d, location()); validateTime(t, location()); return node('LocalDateTime', d + "T" + t, location()) }
+  / d:date_part !datetime_delim                         { validateDate(d, location()); return node('LocalDate', d, location()) }
+  / t:time_part                                        { validateTime(t, location()); return node('LocalTime', t, location()) }
 
 
 S                = [ \t]
 NL               = "\n" / "\r" "\n"
 NLS              = NL / S
 EOF              = !.
-HEX              = [0-9a-f]i
-DIGIT            = DIGIT_OR_UNDER
-DIGIT_OR_UNDER   = [0-9]
-                 / '_'                  { return "" }
+DIGIT            = [0-9]
+HEX              = [0-9a-fA-F]
 ASCII_BASIC      = [A-Za-z0-9_\-]
-DIGITS           = d:DIGIT_OR_UNDER+    { return d.join('') }
 ESCAPED          = '\\"'                { return '"'  }
                  / '\\\\'               { return '\\' }
                  / '\\b'                { return '\b' }
