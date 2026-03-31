@@ -15,7 +15,10 @@
     "test:all": "node --test test/test_toml.js && node test/spec-test.js",
     "prepublishOnly": "npm run build"
   },
-  "repository": "git://github.com/BinaryMuse/toml-node.git",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/BinaryMuse/toml-node.git"
+  },
   "keywords": [
     "toml",
     "parser"
