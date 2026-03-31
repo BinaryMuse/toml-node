@@ -18,6 +18,53 @@
     return obj;
   }
 
+  function validateDate(dateStr, loc) {
+    var parts = dateStr.split('-');
+    var year = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10);
+    var day = parseInt(parts[2], 10);
+    if (month < 1 || month > 12) {
+      genError("Invalid date: month " + month + " out of range.", loc.start.line, loc.start.column);
+    }
+    var maxDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) {
+      maxDays[1] = 29;
+    }
+    if (day < 1 || day > maxDays[month - 1]) {
+      genError("Invalid date: day " + day + " out of range for month " + month + ".", loc.start.line, loc.start.column);
+    }
+  }
+
+  function validateTime(timeStr, loc) {
+    var base = timeStr.split('.')[0];
+    var parts = base.split(':');
+    var hour = parseInt(parts[0], 10);
+    var minute = parseInt(parts[1], 10);
+    var second = parseInt(parts[2], 10);
+    if (hour > 23) {
+      genError("Invalid time: hour " + hour + " out of range.", loc.start.line, loc.start.column);
+    }
+    if (minute > 59) {
+      genError("Invalid time: minute " + minute + " out of range.", loc.start.line, loc.start.column);
+    }
+    if (second > 59) {
+      genError("Invalid time: second " + second + " out of range.", loc.start.line, loc.start.column);
+    }
+  }
+
+  function validateOffset(offsetStr, loc) {
+    if (offsetStr === "Z") return;
+    var parts = offsetStr.substring(1).split(':');
+    var hour = parseInt(parts[0], 10);
+    var minute = parseInt(parts[1], 10);
+    if (hour > 23) {
+      genError("Invalid offset: hour " + hour + " out of range.", loc.start.line, loc.start.column);
+    }
+    if (minute > 59) {
+      genError("Invalid offset: minute " + minute + " out of range.", loc.start.line, loc.start.column);
+    }
+  }
+
   function stripUnderscores(str) {
     return str.replace(/_/g, '');
   }
@@ -236,28 +283,24 @@ simple_key
 secfragment
   = '.' digits:DIGIT+                                  { return "." + digits.join('') }
 
-date
-  = date:(
-      DIGIT DIGIT DIGIT DIGIT
-      '-'
-      DIGIT DIGIT
-      '-'
-      DIGIT DIGIT
-    )                                                               { return  date.join('') }
+date_part
+  = d:(DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT)  { return d.join('') }
 
-time
-  = time:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?) { return time.join('') }
+time_part
+  = t:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?) { return t.join('') }
 
-time_with_offset
-  = time:(
-      DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?
-      ('-' / '+')
-      DIGIT DIGIT ':' DIGIT DIGIT
-    )                                                               { return time.join('') }
+offset
+  = 'Z'i                                              { return "Z" }
+  / sign:[+-] h:(DIGIT DIGIT) ':' m:(DIGIT DIGIT)     { return sign + h.join('') + ":" + m.join('') }
+
+datetime_delim
+  = 'T'i / ' '
 
 datetime
-  = date:date 'T' time:time 'Z'               { return node('Date', new Date(date + "T" + time + "Z"), location()) }
-  / date:date 'T' time:time_with_offset       { return node('Date', new Date(date + "T" + time), location()) }
+  = d:date_part datetime_delim t:time_part o:offset    { validateDate(d, location()); validateTime(t, location()); validateOffset(o, location()); return node('Date', new Date(d + "T" + t + o), location()) }
+  / d:date_part datetime_delim t:time_part             { validateDate(d, location()); validateTime(t, location()); return node('LocalDateTime', d + "T" + t, location()) }
+  / d:date_part !datetime_delim                         { validateDate(d, location()); return node('LocalDate', d, location()) }
+  / t:time_part                                        { validateTime(t, location()); return node('LocalTime', t, location()) }
 
 
 S                = [ \t]

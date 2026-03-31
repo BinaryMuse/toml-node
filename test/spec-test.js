@@ -65,6 +65,12 @@ function collectTypes(typeMap, path, valueNode) {
     typeMap[path] = valueNode.type === "Float" ? "float" : "integer";
   } else if (valueNode.type === "Date") {
     typeMap[path] = "datetime";
+  } else if (valueNode.type === "LocalDateTime") {
+    typeMap[path] = "datetime-local";
+  } else if (valueNode.type === "LocalDate") {
+    typeMap[path] = "date-local";
+  } else if (valueNode.type === "LocalTime") {
+    typeMap[path] = "time-local";
   } else if (valueNode.type === "Array") {
     for (var i = 0; i < valueNode.value.length; i++) {
       collectTypes(typeMap, path + "." + i, valueNode.value[i]);
@@ -104,6 +110,11 @@ function toTaggedJSON(value, typeMap, currentPath) {
   }
 
   if (typeof value === "string") {
+    // Check if this is a local date/time type
+    var strType = typeMap ? typeMap[currentPath] : null;
+    if (strType === "datetime-local" || strType === "date-local" || strType === "time-local") {
+      return { type: strType, value: value };
+    }
     return { type: "string", value: value };
   }
 
