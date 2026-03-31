@@ -1,3 +1,10 @@
+4.0.0 - March 31 2026
+=====================
+
+* Modernize tooling and support TOML v1.0.0 spec ([#66](https://github.com/BinaryMuse/toml-node/issues/66))
+
+---
+
 2.3.0 - July 13 2015
 ====================
 
