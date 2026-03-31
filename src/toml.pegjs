@@ -18,6 +18,10 @@
     return obj;
   }
 
+  function stripUnderscores(str) {
+    return str.replace(/_/g, '');
+  }
+
   function convertCodePoint(str, line, col) {
     var num = parseInt("0x" + str);
 
@@ -141,19 +145,52 @@ multiline_literal_char
   = (!"'''" char:. { return char })
 
 float
-  = left:(float_text / integer_text) ('e' / 'E') right:integer_text { return node('Float', parseFloat(left + 'e' + right), location()) }
-  / text:float_text                                                 { return node('Float', parseFloat(text), location()) }
+  = sign:[+-]? 'inf'                                  { return node('Float', sign === '-' ? -Infinity : Infinity, location()) }
+  / sign:[+-]? 'nan'                                  { return node('Float', NaN, location()) }
+  / left:float_or_int_text [eE] right:float_exp_text  { return node('Float', parseFloat(stripUnderscores(left + 'e' + right)), location()) }
+  / text:float_text                                   { return node('Float', parseFloat(stripUnderscores(text)), location()) }
 
 float_text
-  = '+'? digits:(DIGITS '.' DIGITS)     { return digits.join('') }
-  / '-'  digits:(DIGITS '.' DIGITS)     { return '-' + digits.join('') }
+  = sign:[+-]? digits:FLOAT_DEC_INT '.' frac:DEC_INT  { return (sign === '-' ? '-' : '') + digits + '.' + frac }
+
+float_or_int_text
+  = sign:[+-]? digits:FLOAT_DEC_INT '.' frac:DEC_INT  { return (sign === '-' ? '-' : '') + digits + '.' + frac }
+  / sign:[+-]? digits:FLOAT_DEC_INT                    { return (sign === '-' ? '-' : '') + digits }
+
+// Integer part of floats follows same no-leading-zero rule as integers
+FLOAT_DEC_INT
+  = '0' { return '0' }
+  / DEC_INT_NOZERO
+
+float_exp_text
+  = sign:[+-]? digits:DEC_INT                          { return (sign || '') + digits }
 
 integer
-  = text:integer_text                   { return node('Integer', parseInt(text, 10), location()) }
+  = '0x' digits:HEX_INT                               { return node('Integer', parseInt(stripUnderscores(digits), 16), location()) }
+  / '0o' digits:OCT_INT                                { return node('Integer', parseInt(stripUnderscores(digits), 8), location()) }
+  / '0b' digits:BIN_INT                                { return node('Integer', parseInt(stripUnderscores(digits), 2), location()) }
+  / text:dec_integer_text                              { return node('Integer', parseInt(stripUnderscores(text), 10), location()) }
 
-integer_text
-  = '+'? digits:DIGIT+ !'.'             { return digits.join('') }
-  / '-'  digits:DIGIT+ !'.'             { return '-' + digits.join('') }
+dec_integer_text
+  = sign:[+-]? '0' !([0-9_]) !'.'                     { return (sign || '') + '0' }
+  / sign:[+-]? digits:DEC_INT_NOZERO !'.'             { return (sign || '') + digits }
+
+DEC_INT_NOZERO
+  = head:[1-9] tail:([_]? [0-9])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+// Digit sequences with underscore validation:
+// - Underscores must be between digits (not leading, trailing, or consecutive)
+DEC_INT
+  = head:[0-9] tail:([_]? [0-9])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+HEX_INT
+  = head:[0-9a-fA-F] tail:([_]? [0-9a-fA-F])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+OCT_INT
+  = head:[0-7] tail:([_]? [0-7])* { return head + tail.map(function(p) { return p.join('') }).join('') }
+
+BIN_INT
+  = head:[01] tail:([_]? [01])* { return head + tail.map(function(p) { return p.join('') }).join('') }
 
 boolean
   = 'true'                              { return node('Boolean', true, location()) }
@@ -197,7 +234,7 @@ simple_key
   / quoted_key
 
 secfragment
-  = '.' digits:DIGITS                                  { return "." + digits }
+  = '.' digits:DIGIT+                                  { return "." + digits.join('') }
 
 date
   = date:(
@@ -227,12 +264,9 @@ S                = [ \t]
 NL               = "\n" / "\r" "\n"
 NLS              = NL / S
 EOF              = !.
-HEX              = [0-9a-f]i
-DIGIT            = DIGIT_OR_UNDER
-DIGIT_OR_UNDER   = [0-9]
-                 / '_'                  { return "" }
+DIGIT            = [0-9]
+HEX              = [0-9a-fA-F]
 ASCII_BASIC      = [A-Za-z0-9_\-]
-DIGITS           = d:DIGIT_OR_UNDER+    { return d.join('') }
 ESCAPED          = '\\"'                { return '"'  }
                  / '\\\\'               { return '\\' }
                  / '\\b'                { return '\b' }

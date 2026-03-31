@@ -16,6 +16,7 @@
 var fs = require("fs");
 var path = require("path");
 var toml = require("../index");
+var parser = require("../lib/parser");
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -32,7 +33,52 @@ var FILES_LIST = path.join(TESTS_DIR, "files-toml-1.0.0");
 // Tables become plain JSON objects, arrays become JSON arrays.
 // ---------------------------------------------------------------------------
 
-function toTaggedJSON(value, key) {
+// ---------------------------------------------------------------------------
+// AST type extraction
+//
+// Walk the parser's AST nodes to build a map of path → TOML type.
+// This lets us distinguish Float from Integer even when the JS number
+// is identical (e.g., 3e2 = 300 is Float, not Integer).
+// ---------------------------------------------------------------------------
+
+function buildTypeMap(nodes) {
+  var typeMap = {};
+  var currentPath = [];
+
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    if (node.type === "ObjectPath") {
+      currentPath = node.value;
+    } else if (node.type === "ArrayPath") {
+      currentPath = node.value;
+    } else if (node.type === "Assign") {
+      var keys = Array.isArray(node.key) ? node.key : [node.key];
+      var fullPath = currentPath.concat(keys).join(".");
+      collectTypes(typeMap, fullPath, node.value);
+    }
+  }
+  return typeMap;
+}
+
+function collectTypes(typeMap, path, valueNode) {
+  if (valueNode.type === "Float" || valueNode.type === "Integer") {
+    typeMap[path] = valueNode.type === "Float" ? "float" : "integer";
+  } else if (valueNode.type === "Date") {
+    typeMap[path] = "datetime";
+  } else if (valueNode.type === "Array") {
+    for (var i = 0; i < valueNode.value.length; i++) {
+      collectTypes(typeMap, path + "." + i, valueNode.value[i]);
+    }
+  } else if (valueNode.type === "InlineTable") {
+    for (var j = 0; j < valueNode.value.length; j++) {
+      var entry = valueNode.value[j];
+      var entryKeys = Array.isArray(entry.key) ? entry.key : [entry.key];
+      collectTypes(typeMap, path + "." + entryKeys.join("."), entry.value);
+    }
+  }
+}
+
+function toTaggedJSON(value, typeMap, currentPath) {
   if (value === null || value === undefined) {
     return value;
   }
@@ -42,8 +88,8 @@ function toTaggedJSON(value, key) {
   }
 
   if (Array.isArray(value)) {
-    return value.map(function (item) {
-      return toTaggedJSON(item);
+    return value.map(function (item, i) {
+      return toTaggedJSON(item, typeMap, currentPath + "." + i);
     });
   }
 
@@ -51,7 +97,8 @@ function toTaggedJSON(value, key) {
     var result = {};
     var keys = Object.keys(value);
     for (var i = 0; i < keys.length; i++) {
-      result[keys[i]] = toTaggedJSON(value[keys[i]], keys[i]);
+      var childPath = currentPath ? currentPath + "." + keys[i] : keys[i];
+      result[keys[i]] = toTaggedJSON(value[keys[i]], typeMap, childPath);
     }
     return result;
   }
@@ -71,12 +118,17 @@ function toTaggedJSON(value, key) {
     if (!Number.isFinite(value)) {
       return { type: "float", value: value > 0 ? "inf" : "-inf" };
     }
-    // Determine if this was an integer or float.
-    // The parser uses parseInt for integers and parseFloat for floats,
-    // but both produce JS numbers. We distinguish by checking if
-    // the number has no fractional part and is within safe integer range.
-    // However, this heuristic can't distinguish `1.0` from `1` once parsed.
-    // We'll rely on Number.isInteger as a reasonable approximation.
+
+    // Use AST type map if available to distinguish float from integer
+    var astType = typeMap ? typeMap[currentPath] : null;
+    if (astType === "float") {
+      return { type: "float", value: formatFloat(value) };
+    }
+    if (astType === "integer") {
+      return { type: "integer", value: String(value) };
+    }
+
+    // Fallback heuristic when type map doesn't have info
     if (Number.isInteger(value)) {
       return { type: "integer", value: String(value) };
     }
@@ -262,8 +314,10 @@ function runValidTest(testPath) {
   }
 
   try {
+    var astNodes = parser.parse(tomlContent);
+    var typeMap = buildTypeMap(astNodes);
     var parsed = toml.parse(tomlContent);
-    var tagged = toTaggedJSON(parsed);
+    var tagged = toTaggedJSON(parsed, typeMap, "");
     var diff = deepEqual(tagged, expectedJSON);
     if (diff) {
       return { pass: false, error: diff };
