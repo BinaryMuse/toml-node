@@ -8,28 +8,28 @@ If you haven't heard of TOML, well you're just missing out. [Go check it out now
 TOML Spec Support
 -----------------
 
-toml-node supports [TOML v1.0.0](https://toml.io/en/v1.0.0), scoring **671/678 (99.0%)** on the official [toml-test](https://github.com/toml-lang/toml-test) compliance suite:
+toml-node supports [TOML v1.1.0](https://toml.io/en/v1.1.0), scoring **673/680 (99.0%)** on the official [toml-test](https://github.com/toml-lang/toml-test) compliance suite:
 
 | | Pass | Total | Rate |
 |---|---|---|---|
-| Valid tests | 204 | 205 | 99.5% |
-| Invalid tests | 467 | 473 | 98.7% |
-| **Total** | **671** | **678** | **99.0%** |
+| Valid tests | 213 | 214 | 99.5% |
+| Invalid tests | 460 | 466 | 98.7% |
+| **Total** | **673** | **680** | **99.0%** |
 
 The 7 remaining failures are inherent JavaScript platform limitations shared by all JS TOML parsers:
 
 - 1 valid test: 64-bit integer precision (`Number` can't represent values beyond `Number.MAX_SAFE_INTEGER`)
 - 6 invalid tests: UTF-8 encoding validation (Node.js handles UTF-8 decoding at the engine level before the parser sees the data)
 
-### v1.0.0 Feature Support
+### Feature Support
 
-- **Strings**: basic, literal, multiline, all escape sequences (`\uXXXX`, `\UXXXXXXXX`)
+- **Strings**: basic, literal, multiline, all escape sequences (`\uXXXX`, `\UXXXXXXXX`, `\xHH`, `\e`)
 - **Integers**: decimal, hexadecimal (`0xDEADBEEF`), octal (`0o755`), binary (`0b11010110`)
 - **Floats**: decimal, scientific notation, `inf`, `-inf`, `nan`
 - **Booleans**: `true`, `false`
-- **Dates/Times**: offset date-time, local date-time, local date, local time
+- **Dates/Times**: offset date-time, local date-time, local date, local time; seconds optional
 - **Arrays**: mixed types allowed
-- **Tables**: standard, inline (with dotted and quoted keys), array of tables
+- **Tables**: standard, inline (with dotted/quoted keys, newlines, trailing commas), array of tables
 - **Keys**: bare, quoted, dotted (`fruit.apple.color = "red"`)
 - **Comments**: `# line comments`
 

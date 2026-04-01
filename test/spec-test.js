@@ -23,7 +23,7 @@ var parser = require("../lib/parser");
 // ---------------------------------------------------------------------------
 
 var TESTS_DIR = path.join(__dirname, "..", ".binarymuse", "toml-test", "tests");
-var FILES_LIST = path.join(TESTS_DIR, "files-toml-1.0.0");
+var FILES_LIST = path.join(TESTS_DIR, "files-toml-1.1.0");
 
 // Known failures due to JS platform limitations, not parser bugs.
 // These are excluded from the pass/fail exit code.
