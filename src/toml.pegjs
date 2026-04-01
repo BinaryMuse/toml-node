@@ -72,8 +72,9 @@
 
   function isControlCharMultiline(ch) {
     var code = ch.charCodeAt(0);
-    // Same as isControlChar but allows newline (0x0A) and carriage return (0x0D)
-    return (code >= 0x00 && code <= 0x08) || (code >= 0x0B && code <= 0x0C) || (code >= 0x0E && code <= 0x1F) || code === 0x7F;
+    // Same as isControlChar but allows newline (0x0A). Bare \r (0x0D) is still
+    // rejected; valid \r\n sequences are handled explicitly in the grammar rules.
+    return (code >= 0x00 && code <= 0x08) || (code >= 0x0B && code <= 0x1F) || code === 0x7F;
   }
 
   function stripUnderscores(str) {
@@ -203,6 +204,7 @@ mlb_content
   = ESCAPED
   / mlb_escaped_newline
   / '\\' . { genError("Invalid escape sequence", location().start.line, location().start.column) }
+  / "\r\n" { return "\n" }
   / !'"' char:. { if (isControlCharMultiline(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
 
 mlb_escaped_newline
@@ -225,7 +227,8 @@ mll_body
     }
 
 mll_content
-  = !"'" char:. { if (isControlCharMultiline(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
+  = "\r\n" { return "\n" }
+  / !"'" char:. { if (isControlCharMultiline(char)) genError("Control characters are not allowed in strings", location().start.line, location().start.column); return char }
 
 mll_quotes
   = "''" !"'"                            { return "''" }
@@ -311,15 +314,19 @@ array_sep
   = S / NL / comment
 
 inline_table
-  = '{' S* '}'                                                            { return node('InlineTable', [], location()) }
-  / '{' S* entries:inline_table_entry_list S* last:inline_table_entry S* '}' { return node('InlineTable', entries.concat(last), location()) }
-  / '{' S* entry:inline_table_entry S* '}'                                { return node('InlineTable', [entry], location()) }
+  = '{' inline_sep* '}'                                                                          { return node('InlineTable', [], location()) }
+  / '{' inline_sep* entries:inline_table_entry_list inline_sep* last:inline_table_entry inline_sep* '}' { return node('InlineTable', entries.concat(last), location()) }
+  / '{' inline_sep* entries:inline_table_entry_list inline_sep* '}'                              { return node('InlineTable', entries, location()) }
+  / '{' inline_sep* entry:inline_table_entry inline_sep* '}'                                     { return node('InlineTable', [entry], location()) }
 
 inline_table_entry_list
-  = entries:(S* e:inline_table_entry S* ',' { return e })+                { return entries }
+  = entries:(inline_sep* e:inline_table_entry inline_sep* ',' { return e })+                     { return entries }
 
 inline_table_entry
-  = keys:inline_key S* '=' S* value:value                                { return node('InlineTableValue', value, location(), keys) }
+  = keys:inline_key S* '=' S* value:value                                                        { return node('InlineTableValue', value, location(), keys) }
+
+inline_sep
+  = S / NL / comment
 
 inline_key
   = parts:inline_dot_key_part+ S* last:simple_key                        { return parts.concat(last) }
@@ -340,6 +347,7 @@ date_part
 
 time_part
   = t:(DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT secfragment?) { return t.join('') }
+  / t:(DIGIT DIGIT ':' DIGIT DIGIT) !(':') { return t.join('') + ':00' }
 
 offset
   = 'Z'i                                              { return "Z" }
@@ -369,6 +377,8 @@ ESCAPED          = '\\"'                { return '"'  }
                  / '\\n'                { return '\n' }
                  / '\\f'                { return '\f' }
                  / '\\r'                { return '\r' }
+                 / '\\e'                { return '\x1B' }
                  / ESCAPED_UNICODE
 ESCAPED_UNICODE  = "\\U" digits:(HEX HEX HEX HEX HEX HEX HEX HEX) { return convertCodePoint(digits.join('')) }
                  / "\\u" digits:(HEX HEX HEX HEX) { return convertCodePoint(digits.join('')) }
+                 / "\\x" digits:(HEX HEX) { return convertCodePoint(digits.join('')) }
