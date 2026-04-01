@@ -1,3 +1,13 @@
+4.1.1 - March 31 2026
+=====================
+
+* Increase performance ~5x ([#68](https://github.com/BinaryMuse/toml-node/pull/68))
+
+4.1.0 - March 31 2026
+=====================
+
+* Add spec v1.1.0 support ([#67](https://github.com/BinaryMuse/toml-node/pull/67))
+
 4.0.1 - March 31 2026
 =====================
 
