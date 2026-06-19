@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/BinaryMuse/toml-node.git"
+    "url": "git+https://github.com/BinaryMuse/toml-node.git"
   },
   "keywords": [
     "toml",
