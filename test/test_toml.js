@@ -38,6 +38,18 @@ function readFixture(name) {
   return fs.readFileSync(path.join(__dirname, name), "utf8");
 }
 
+function rejectsWithoutObjectPrototypeMutation(tomlStr, propertyName) {
+  delete Object.prototype[propertyName];
+  try {
+    assert.throws(function () {
+      toml.parse(tomlStr);
+    });
+    assert.strictEqual(Object.prototype[propertyName], undefined);
+  } finally {
+    delete Object.prototype[propertyName];
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Expected values for fixture files
 // ---------------------------------------------------------------------------
@@ -419,6 +431,37 @@ describe("error handling", function () {
       assert.strictEqual(e.line, 3);
       assert.strictEqual(e.column, 2);
     }
+  });
+});
+
+describe("prototype pollution hardening", function () {
+  it("rejects table paths that descend through scalar values", function () {
+    rejectsWithoutObjectPrototypeMutation(
+      "[a.b]\ny = 1\n[a.b.y.__proto__.__proto__]\npolluted = \"yes\"",
+      "polluted"
+    );
+  });
+
+  it("rejects scalar descent after table array path state changes", function () {
+    rejectsWithoutObjectPrototypeMutation(
+      "aa = 1\n[[a]]\n[aa.__proto__.__proto__]\npolluted = \"yes\"",
+      "polluted"
+    );
+  });
+
+  it("does not inject nested objects into Object.prototype", function () {
+    rejectsWithoutObjectPrototypeMutation(
+      "[a.b]\ny = 1\n[a.b.y.__proto__.__proto__.code]\nval = \"arbitrary\"",
+      "code"
+    );
+  });
+
+  it("keeps direct __proto__ tables as own result properties", function () {
+    var result = toml.parse("[__proto__]\nvalue = \"safe\"");
+
+    assert.strictEqual(Object.prototype.value, undefined);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(result, "__proto__"), true);
+    assert.strictEqual(result.__proto__.value, "safe");
   });
 });
 
