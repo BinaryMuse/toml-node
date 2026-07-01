@@ -1,3 +1,8 @@
+4.1.2 - June 30 2026
+=====================
+
+* Address [security advisory `GHSA-v5mp-jgw5-2x6j`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-v5mp-jgw5-2x6j) (CVE pending), in which a specially crafted TOML string could pollute `Object.prototype` process-wide..
+
 4.1.1 - March 31 2026
 =====================
 
