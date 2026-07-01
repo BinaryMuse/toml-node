@@ -3,6 +3,7 @@
 var { describe, it } = require("node:test");
 var assert = require("node:assert");
 var toml = require("../");
+var parser = require("../lib/parser");
 var fs = require("fs");
 var path = require("path");
 
@@ -292,6 +293,24 @@ describe("whitespace", function () {
 
   it("leading newlines", function () {
     parsesToml("\ntest = \"ing\"", { test: "ing" });
+  });
+
+  it("allows a UTF-8 BOM at the start of the document", function () {
+    parsesToml("\uFEFFa = 1", { a: 1 });
+
+    assert.doesNotThrow(function () {
+      parser.parse("\uFEFF# starts with a BOM\n");
+    });
+  });
+
+  it("rejects a UTF-8 BOM anywhere but the start of the document", function () {
+    assert.throws(function () {
+      toml.parse("a = \uFEFF1");
+    });
+
+    assert.throws(function () {
+      toml.parse("\uFEFF\uFEFFa = 1");
+    });
   });
 });
 

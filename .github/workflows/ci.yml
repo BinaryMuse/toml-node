@@ -20,7 +20,4 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm test
-      - name: Spec compliance tests
-        run: |
-          git clone --depth 1 https://github.com/toml-lang/toml-test.git .binarymuse/toml-test
-          npm run test:spec
+      - run: npm run test:spec:fresh
