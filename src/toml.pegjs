@@ -93,7 +93,7 @@
 }
 
 start
-  = line*                               { return nodes }
+  = BOM? line*                           { return nodes }
 
 line
   = S* expr:expression S* comment? (NL+ / EOF)
@@ -324,6 +324,7 @@ S                = [ \t]
 NL               = "\n" / "\r" "\n"
 NLS              = NL / S
 EOF              = !.
+BOM              = "\uFEFF"
 DIGIT            = [0-9]
 HEX              = [0-9a-fA-F]
 ASCII_BASIC      = [A-Za-z0-9_\-]
