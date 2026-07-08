@@ -1,3 +1,8 @@
+4.2.0 - Unreleased
+=====================
+
+* Add opt-in [Temporal](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Temporal) support via `toml.parse(input, { useTemporal: true })`, mapping offset date-times to `Temporal.ZonedDateTime` and local date-times/dates/times to `Temporal.PlainDateTime`/`PlainDate`/`PlainTime`. An implementation can be supplied via the `temporal` option on runtimes without a `Temporal` global. ([#69](https://github.com/BinaryMuse/toml-node/issues/69))
+
 4.1.2 - June 30 2026
 =====================
 

@@ -78,6 +78,52 @@ typeof data.ld             // "string"
 typeof data.lt             // "string"
 ```
 
+#### Temporal Support
+
+Pass `useTemporal: true` to have date/time values returned as
+[Temporal](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Temporal)
+objects instead:
+
+| TOML type        | Returned as               |
+| ---------------- | ------------------------- |
+| Offset date-time | `Temporal.ZonedDateTime`  |
+| Local date-time  | `Temporal.PlainDateTime`  |
+| Local date       | `Temporal.PlainDate`      |
+| Local time       | `Temporal.PlainTime`      |
+
+```javascript
+const data = toml.parse(`
+odt = 1979-05-27T00:32:00-07:00
+ldt = 1979-05-27T07:32:00
+ld  = 1979-05-27
+lt  = 07:32:00
+`, { useTemporal: true });
+
+data.odt.toString()  // "1979-05-27T00:32:00-07:00[-07:00]"
+data.ldt.toString()  // "1979-05-27T07:32:00"
+data.ld.toString()   // "1979-05-27"
+data.lt.toString()   // "07:32:00"
+```
+
+Offset date-times become `Temporal.ZonedDateTime` values whose time zone is
+the original UTC offset (`Z` maps to the `UTC` time zone), so the offset
+written in the TOML document is preserved — unlike the default `Date`
+representation, which loses it. Fractional seconds beyond nanosecond
+precision are truncated, as permitted by the TOML spec.
+
+`useTemporal` requires a runtime with the `Temporal` global. On runtimes
+that don't provide it yet, pass an implementation such as
+[`@js-temporal/polyfill`](https://www.npmjs.com/package/@js-temporal/polyfill)
+via the `temporal` option:
+
+```javascript
+const { Temporal } = require('@js-temporal/polyfill');
+const data = toml.parse(someTomlString, { useTemporal: true, temporal: Temporal });
+```
+
+Once `Temporal` is broadly available, Temporal output is expected to become
+the default behavior in a future major version.
+
 ### Special Float Values
 
 `inf` and `nan` are returned as JavaScript `Infinity` and `NaN`:
