@@ -331,7 +331,7 @@ offset
   / $(sign:[+-] DIGIT DIGIT ':' DIGIT DIGIT)
 
 datetime
-  = d:date_part datetime_delim t:time_part o:offset    { var off = offset(); validateDate(d, off); validateTime(t, off); validateOffset(o, off); return node('Date', new Date(d + "T" + t + o), off) }
+  = d:date_part datetime_delim t:time_part o:offset    { var off = offset(); validateDate(d, off); validateTime(t, off); validateOffset(o, off); var n = node('Date', new Date(d + "T" + t + o), off); n.raw = d + "T" + t; n.tz = o; return n }
   / d:date_part datetime_delim t:time_part             { var off = offset(); validateDate(d, off); validateTime(t, off); return node('LocalDateTime', d + "T" + t, off) }
   / d:date_part !datetime_delim                         { var off = offset(); validateDate(d, off); return node('LocalDate', d, off) }
   / t:time_part                                        { var off = offset(); validateTime(t, off); return node('LocalTime', t, off) }

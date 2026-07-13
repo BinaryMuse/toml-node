@@ -340,6 +340,119 @@ describe("datetimes", function () {
   });
 });
 
+describe("temporal support", function () {
+  var Temporal = require("@js-temporal/polyfill").Temporal;
+
+  function parseTemporal(str) {
+    return toml.parse(str, { useTemporal: true, temporal: Temporal });
+  }
+
+  it("parses offset date-times as Temporal.ZonedDateTime", function () {
+    var result = parseTemporal("a = 1979-05-27T07:32:00Z");
+    assert.ok(result.a instanceof Temporal.ZonedDateTime);
+    assert.strictEqual(result.a.toString(), "1979-05-27T07:32:00+00:00[UTC]");
+    assert.strictEqual(
+      result.a.epochMilliseconds,
+      new Date("1979-05-27T07:32:00Z").getTime()
+    );
+  });
+
+  it("preserves the offset of offset date-times", function () {
+    var result = parseTemporal(
+      "a = 1979-05-27T00:32:00-07:00\nb = 1979-05-27T07:32:00+02:00"
+    );
+    assert.strictEqual(result.a.toString(), "1979-05-27T00:32:00-07:00[-07:00]");
+    assert.strictEqual(result.b.toString(), "1979-05-27T07:32:00+02:00[+02:00]");
+  });
+
+  it("parses offset date-times with lowercase delimiters and space delimiter", function () {
+    var result = parseTemporal(
+      "a = 1979-05-27t07:32:00z\nb = 1979-05-27 07:32:00Z"
+    );
+    assert.strictEqual(result.a.toString(), "1979-05-27T07:32:00+00:00[UTC]");
+    assert.strictEqual(result.b.toString(), "1979-05-27T07:32:00+00:00[UTC]");
+  });
+
+  it("parses local date-times as Temporal.PlainDateTime", function () {
+    var result = parseTemporal("a = 1979-05-27T07:32:00\nb = 1979-05-27T00:32:00.999999");
+    assert.ok(result.a instanceof Temporal.PlainDateTime);
+    assert.strictEqual(result.a.toString(), "1979-05-27T07:32:00");
+    assert.strictEqual(result.b.toString(), "1979-05-27T00:32:00.999999");
+  });
+
+  it("parses local dates as Temporal.PlainDate", function () {
+    var result = parseTemporal("a = 1979-05-27");
+    assert.ok(result.a instanceof Temporal.PlainDate);
+    assert.strictEqual(result.a.toString(), "1979-05-27");
+  });
+
+  it("parses local times as Temporal.PlainTime", function () {
+    var result = parseTemporal("a = 07:32:00\nb = 00:32:00.999999");
+    assert.ok(result.a instanceof Temporal.PlainTime);
+    assert.strictEqual(result.a.toString(), "07:32:00");
+    assert.strictEqual(result.b.toString(), "00:32:00.999999");
+  });
+
+  it("parses times with omitted seconds", function () {
+    var result = parseTemporal("a = 07:32\nb = 1979-05-27T07:32");
+    assert.strictEqual(result.a.toString(), "07:32:00");
+    assert.strictEqual(result.b.toString(), "1979-05-27T07:32:00");
+  });
+
+  it("truncates fractional seconds beyond nanosecond precision", function () {
+    var result = parseTemporal(
+      "a = 07:32:00.123456789999\n" +
+      "b = 1979-05-27T07:32:00.123456789999\n" +
+      "c = 1979-05-27T07:32:00.123456789999-07:00"
+    );
+    assert.strictEqual(result.a.toString(), "07:32:00.123456789");
+    assert.strictEqual(result.b.toString(), "1979-05-27T07:32:00.123456789");
+    assert.strictEqual(
+      result.c.toString(),
+      "1979-05-27T07:32:00.123456789-07:00[-07:00]"
+    );
+  });
+
+  it("converts date-times inside arrays and inline tables", function () {
+    var result = parseTemporal(
+      "arr = [ 1979-05-27, 07:32:00 ]\ninline = { when = 1979-05-27T07:32:00Z }"
+    );
+    assert.ok(result.arr[0] instanceof Temporal.PlainDate);
+    assert.ok(result.arr[1] instanceof Temporal.PlainTime);
+    assert.ok(result.inline.when instanceof Temporal.ZonedDateTime);
+  });
+
+  it("does not affect parsing when useTemporal is not set", function () {
+    var result = toml.parse("a = 1979-05-27T07:32:00Z\nb = 1979-05-27\nc = 07:32:00");
+    assert.ok(result.a instanceof Date);
+    assert.strictEqual(result.b, "1979-05-27");
+    assert.strictEqual(result.c, "07:32:00");
+  });
+
+  it("uses the global Temporal object when no implementation is passed", function () {
+    var hadGlobal = "Temporal" in globalThis;
+    var previous = globalThis.Temporal;
+    globalThis.Temporal = Temporal;
+    try {
+      var result = toml.parse("a = 1979-05-27", { useTemporal: true });
+      assert.ok(result.a instanceof Temporal.PlainDate);
+    } finally {
+      if (hadGlobal) globalThis.Temporal = previous;
+      else delete globalThis.Temporal;
+    }
+  });
+
+  it(
+    "throws a helpful error when no Temporal implementation is available",
+    { skip: typeof globalThis.Temporal !== "undefined" },
+    function () {
+      assert.throws(function () {
+        toml.parse("a = 1979-05-27", { useTemporal: true });
+      }, /no Temporal implementation is available/);
+    }
+  );
+});
+
 describe("quoted keys", function () {
   it("simple quoted key", function () {
     parsesToml('["ʞ"]\na = 1', { ʞ: { a: 1 } });
