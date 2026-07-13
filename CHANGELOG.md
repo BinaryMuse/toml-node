@@ -1,7 +1,7 @@
-4.1.2 - June 30 2026
+4.2.0 - July 13 2026
 =====================
 
-* Address [security advisory `GHSA-v5mp-jgw5-2x6j`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-v5mp-jgw5-2x6j) (CVE pending), in which a specially crafted TOML string could pollute `Object.prototype` process-wide..
+* Address [security advisory `GHSA-82x6-q7mm-w9cf`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-82x6-q7mm-w9cf) (CVE pending), in which deeply nested arrays or inline tables could overflow the call stack and crash the process with an uncatchable `RangeError`. Nesting is now bounded (default 500 levels), and input past the limit throws a normal parse error. The limit is configurable via `toml.parse(input, { maxDepth })`.
 
 4.1.1 - March 31 2026
 =====================
