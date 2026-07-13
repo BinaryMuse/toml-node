@@ -1,7 +1,12 @@
-4.2.0 - Unreleased
+4.3.0 - Unreleased
 =====================
 
 * Add opt-in [Temporal](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Temporal) support via `toml.parse(input, { useTemporal: true })`, mapping offset date-times to `Temporal.ZonedDateTime` and local date-times/dates/times to `Temporal.PlainDateTime`/`PlainDate`/`PlainTime`. An implementation can be supplied via the `temporal` option on runtimes without a `Temporal` global. ([#69](https://github.com/BinaryMuse/toml-node/issues/69))
+
+4.2.0 - July 13 2026
+=====================
+
+* Address [security advisory `GHSA-82x6-q7mm-w9cf`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-82x6-q7mm-w9cf) (CVE pending), in which deeply nested arrays or inline tables could overflow the call stack and crash the process with an uncatchable `RangeError`. Nesting is now bounded (default 500 levels), and input past the limit throws a normal parse error. The limit is configurable via `toml.parse(input, { maxDepth })`.
 
 4.1.2 - June 30 2026
 =====================

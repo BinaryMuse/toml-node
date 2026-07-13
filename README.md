@@ -60,6 +60,14 @@ try {
 }
 ```
 
+### Nesting Depth Limit
+
+To guard against stack overflow on maliciously deep input, arrays and inline tables may nest at most 500 levels deep by default; input past the limit throws a normal parse error. Adjust the limit with the `maxDepth` option:
+
+```javascript
+toml.parse(someTomlString, { maxDepth: 100 });
+```
+
 ### Date/Time Values
 
 Offset date-times are returned as JavaScript `Date` objects. Local date-times, local dates, and local times are returned as strings since they have no timezone information and can't be losslessly represented as `Date`:

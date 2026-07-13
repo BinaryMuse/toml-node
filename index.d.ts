@@ -13,6 +13,13 @@ declare module 'toml' {
 
   export interface ParseOptions {
     /**
+     * Maximum nesting depth for arrays and inline tables. Parsing input nested
+     * deeper than this throws a parse error rather than overflowing the stack.
+     * Defaults to 500.
+     */
+    maxDepth?: number;
+
+    /**
      * When true, date/time values are returned as Temporal objects instead of
      * the default representations:
      *

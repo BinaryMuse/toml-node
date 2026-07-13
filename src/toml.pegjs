@@ -2,6 +2,13 @@
   var nodes = [];
   var inputText = input;
 
+  // Bound on how deeply arrays / inline tables may nest. The generated parser
+  // is recursive-descent, so nesting depth maps directly onto call-stack depth;
+  // without a limit, deeply nested input overflows the stack with an uncatchable
+  // RangeError instead of a normal parse error (GHSA-82x6-q7mm-w9cf).
+  var depth = 0;
+  var MAX_DEPTH = (options && options.maxDepth != null) ? options.maxDepth : 500;
+
   function resolveLineCol(off) {
     var line = 1, col = 1;
     for (var i = 0; i < off; i++) {
@@ -131,7 +138,19 @@ quoted_key
   = node:double_quoted_single_line_string { return node.value }
   / node:single_quoted_single_line_string { return node.value }
 
+// The depth guard brackets every value. `value_choice` always pairs the
+// increment with a decrement — on the matching path via its action, and on the
+// non-matching path via the trailing predicate — so backtracking (e.g. the
+// failed `value` probe after a trailing comma) can't leak the counter.
 value
+  = &{ if (++depth > MAX_DEPTH) { depth--; genError("Maximum nesting depth of " + MAX_DEPTH + " exceeded.", offset()); } return true; }
+    v:value_choice { return v; }
+
+value_choice
+  = v:value_body { depth--; return v; }
+  / &{ depth--; return false; }
+
+value_body
   = string / number_or_date / boolean / array / inline_table
 
 // Unified entry point for numbers and dates — avoids backtracking across
