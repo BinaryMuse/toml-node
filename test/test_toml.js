@@ -453,6 +453,67 @@ describe("error handling", function () {
   });
 });
 
+describe("nesting depth limit (GHSA-82x6-q7mm-w9cf)", function () {
+  function nestArray(depth) {
+    return "a=" + "[".repeat(depth) + "1" + "]".repeat(depth);
+  }
+
+  function nestInlineTable(depth) {
+    return "a=" + "{b=".repeat(depth) + "1" + "}".repeat(depth);
+  }
+
+  it("rejects deeply nested arrays with a catchable parse error, not a RangeError", function () {
+    try {
+      toml.parse(nestArray(5000));
+      assert.fail("Should have thrown");
+    } catch (e) {
+      assert.strictEqual(e instanceof RangeError, false);
+      assert.strictEqual(typeof e.line, "number");
+    }
+  });
+
+  it("rejects deeply nested inline tables with a catchable parse error", function () {
+    try {
+      toml.parse(nestInlineTable(5000));
+      assert.fail("Should have thrown");
+    } catch (e) {
+      assert.strictEqual(e instanceof RangeError, false);
+      assert.strictEqual(typeof e.line, "number");
+    }
+  });
+
+  it("allows nesting up to the default limit", function () {
+    // The innermost scalar is itself a value, so N brackets reach depth N + 1.
+    assert.doesNotThrow(function () {
+      toml.parse(nestArray(499));
+    });
+  });
+
+  it("rejects nesting past the default limit", function () {
+    assert.throws(function () {
+      toml.parse(nestArray(500));
+    });
+  });
+
+  it("honors a custom maxDepth option", function () {
+    assert.doesNotThrow(function () {
+      toml.parse(nestArray(9), { maxDepth: 10 });
+    });
+    assert.throws(function () {
+      toml.parse(nestArray(10), { maxDepth: 10 });
+    });
+  });
+
+  it("does not miscount sibling values via backtracking", function () {
+    // Each trailing comma triggers a failed `value` probe that the parser
+    // backtracks over; the guard must not leak depth across these siblings.
+    var siblings = [];
+    for (var i = 0; i < 2000; i++) siblings.push("[1,]");
+    var result = toml.parse("a=[" + siblings.join(",") + "]", { maxDepth: 4 });
+    assert.strictEqual(result.a.length, 2000);
+  });
+});
+
 describe("prototype pollution hardening", function () {
   it("rejects table paths that descend through scalar values", function () {
     rejectsWithoutObjectPrototypeMutation(
