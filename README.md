@@ -8,18 +8,17 @@ If you haven't heard of TOML, well you're just missing out. [Go check it out now
 TOML Spec Support
 -----------------
 
-toml-node supports [TOML v1.1.0](https://toml.io/en/v1.1.0), scoring **673/680 (99.0%)** on the official [toml-test](https://github.com/toml-lang/toml-test) compliance suite:
+toml-node supports [TOML v1.1.0](https://toml.io/en/v1.1.0), scoring **702/708 (99.2%)** on the official [toml-test](https://github.com/toml-lang/toml-test) compliance suite:
 
 | | Pass | Total | Rate |
 |---|---|---|---|
-| Valid tests | 213 | 214 | 99.5% |
-| Invalid tests | 460 | 466 | 98.7% |
-| **Total** | **673** | **680** | **99.0%** |
+| Valid tests | 218 | 218 | 100% |
+| Invalid tests | 484 | 490 | 98.8% |
+| **Total** | **702** | **708** | **99.2%** |
 
-The 7 remaining failures are inherent JavaScript platform limitations shared by all JS TOML parsers:
+The 6 remaining failures are inherent JavaScript platform limitations shared by all JS TOML parsers: they cover UTF-8 encoding validation, which Node.js handles at the engine level before the parser sees the data.
 
-- 1 valid test: 64-bit integer precision (`Number` can't represent values beyond `Number.MAX_SAFE_INTEGER`)
-- 6 invalid tests: UTF-8 encoding validation (Node.js handles UTF-8 decoding at the engine level before the parser sees the data)
+Note that integers beyond `Number.MAX_SAFE_INTEGER` require the [`bigint` option](#integer-range-and-bigint) to parse losslessly; without it they throw a parse error rather than silently losing precision.
 
 ### Feature Support
 
@@ -67,6 +66,27 @@ To guard against stack overflow on maliciously deep input, arrays and inline tab
 ```javascript
 toml.parse(someTomlString, { maxDepth: 100 });
 ```
+
+### Integer Range and BigInt
+
+TOML requires parsers to handle the full range of 64-bit signed integers, but JavaScript's `number` type can only represent integers up to `Number.MAX_SAFE_INTEGER` (2⁵³ − 1) losslessly. By default, `toml.parse` returns integers as `number` and throws a parse error when a value falls outside the safe range, rather than silently returning a rounded value:
+
+```javascript
+toml.parse('id = 771752188537605140');
+// Error: Integer 771752188537605140 cannot be represented losslessly
+// as a JavaScript number. Use the `bigint` option to parse integers
+// as BigInt values.
+```
+
+Pass `bigint: true` to instead parse **all** integers as `BigInt`, preserving the full 64-bit range:
+
+```javascript
+const data = toml.parse('id = 771752188537605140\ncount = 3', { bigint: true });
+data.id     // 771752188537605140n
+data.count  // 3n
+```
+
+Integers outside the 64-bit signed range always throw, in either mode, as required by the spec. Floats are unaffected by all of this: TOML floats are IEEE 754 binary64 values, which is exactly what a JavaScript `number` is, so every TOML float is represented as faithfully as the spec intends.
 
 ### Date/Time Values
 

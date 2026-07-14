@@ -254,11 +254,13 @@ FLOAT_DEC_INT
 float_exp_text
   = sign:[+-]? digits:$DEC_DIGIT_SEQ                          { return (sign || '') + digits }
 
+// Integer values are BigInt so the full 64-bit range survives parsing;
+// the compiler converts to Number (or errors) based on options.
 integer
-  = '0x' digits:$HEX_DIGIT_SEQ                               { return node('Integer', parseInt(stripUnderscores(digits), 16), offset()) }
-  / '0o' digits:$OCT_DIGIT_SEQ                                { return node('Integer', parseInt(stripUnderscores(digits), 8), offset()) }
-  / '0b' digits:$BIN_DIGIT_SEQ                                { return node('Integer', parseInt(stripUnderscores(digits), 2), offset()) }
-  / text:dec_integer_text                              { return node('Integer', parseInt(stripUnderscores(text), 10), offset()) }
+  = '0x' digits:$HEX_DIGIT_SEQ                               { return node('Integer', BigInt('0x' + stripUnderscores(digits)), offset()) }
+  / '0o' digits:$OCT_DIGIT_SEQ                                { return node('Integer', BigInt('0o' + stripUnderscores(digits)), offset()) }
+  / '0b' digits:$BIN_DIGIT_SEQ                                { return node('Integer', BigInt('0b' + stripUnderscores(digits)), offset()) }
+  / text:dec_integer_text                              { return node('Integer', BigInt(stripUnderscores(text)), offset()) }
 
 dec_integer_text
   = sign:[+-]? '0' !([0-9_]) !'.'                     { return (sign || '') + '0' }

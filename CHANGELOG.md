@@ -1,3 +1,9 @@
+5.0.0 - Unreleased
+=====================
+
+* **Breaking:** Integers outside JavaScript's safe range (beyond ±`Number.MAX_SAFE_INTEGER`) now throw a parse error instead of silently returning a rounded value ([#28](https://github.com/BinaryMuse/toml-node/issues/28)). Opt in to lossless handling of the full 64-bit range with `toml.parse(input, { bigint: true })`, which returns all integer values as `BigInt`.
+* **Breaking:** Integers outside TOML's 64-bit signed integer range now throw a parse error in either mode, as required by the spec. Previously they were silently rounded.
+
 4.3.0 - Unreleased
 =====================
 
