@@ -1,10 +1,10 @@
-5.0.0 - Unreleased
+5.0.0 - July 14 2026
 =====================
 
 * **Breaking:** Integers outside JavaScript's safe range (beyond ±`Number.MAX_SAFE_INTEGER`) now throw a parse error instead of silently returning a rounded value ([#28](https://github.com/BinaryMuse/toml-node/issues/28)). Opt in to lossless handling of the full 64-bit range with `toml.parse(input, { bigint: true })`, which returns all integer values as `BigInt`.
 * **Breaking:** Integers outside TOML's 64-bit signed integer range now throw a parse error in either mode, as required by the spec. Previously they were silently rounded.
 
-4.3.0 - Unreleased
+4.3.0 - July 13 2026
 =====================
 
 * Add opt-in [Temporal](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Temporal) support via `toml.parse(input, { useTemporal: true })`, mapping offset date-times to `Temporal.ZonedDateTime` and local date-times/dates/times to `Temporal.PlainDateTime`/`PlainDate`/`PlainTime`. An implementation can be supplied via the `temporal` option on runtimes without a `Temporal` global. ([#69](https://github.com/BinaryMuse/toml-node/issues/69))
