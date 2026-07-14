@@ -28,8 +28,6 @@ var FILES_LIST = path.join(TESTS_DIR, "files-toml-1.1.0");
 // Known failures due to JS platform limitations, not parser bugs.
 // These are excluded from the pass/fail exit code.
 var KNOWN_FAILURES = [
-  // Number can't represent 64-bit integers beyond Number.MAX_SAFE_INTEGER
-  "valid/integer/long",
   // Node.js handles UTF-8 decoding at the engine level; invalid byte sequences
   // are replaced before the parser sees the data, so we can't reject them.
   "invalid/encoding/bad-codepoint",
@@ -38,6 +36,12 @@ var KNOWN_FAILURES = [
   "invalid/encoding/bad-utf8-in-multiline-literal",
   "invalid/encoding/bad-utf8-in-string",
   "invalid/encoding/bad-utf8-in-string-literal",
+];
+
+// Tests whose integers exceed Number.MAX_SAFE_INTEGER; the parser rejects
+// them by default (a documented spec deviation), so run them in bigint mode.
+var BIGINT_TESTS = [
+  "valid/integer/long",
 ];
 
 // ---------------------------------------------------------------------------
@@ -135,6 +139,10 @@ function toTaggedJSON(value, typeMap, currentPath) {
 
   if (typeof value === "boolean") {
     return { type: "bool", value: String(value) };
+  }
+
+  if (typeof value === "bigint") {
+    return { type: "integer", value: String(value) };
   }
 
   if (typeof value === "number") {
@@ -342,7 +350,8 @@ function runValidTest(testPath) {
   try {
     var astNodes = parser.parse(tomlContent);
     var typeMap = buildTypeMap(astNodes);
-    var parsed = toml.parse(tomlContent);
+    var options = BIGINT_TESTS.indexOf(testPath) !== -1 ? { bigint: true } : undefined;
+    var parsed = toml.parse(tomlContent, options);
     var tagged = toTaggedJSON(parsed, typeMap, "");
     var diff = deepEqual(tagged, expectedJSON);
     if (diff) {

@@ -20,6 +20,18 @@ declare module 'toml' {
     maxDepth?: number;
 
     /**
+     * When true, all integer values are returned as `BigInt` instead of
+     * `number`, preserving the full 64-bit signed integer range required by
+     * TOML. When false (the default), integers outside
+     * `Number.MIN_SAFE_INTEGER`..`Number.MAX_SAFE_INTEGER` throw a parse
+     * error rather than silently losing precision.
+     *
+     * Floats are unaffected: TOML floats are IEEE 754 binary64, which is
+     * exactly what a JavaScript number is.
+     */
+    bigint?: boolean;
+
+    /**
      * When true, date/time values are returned as Temporal objects instead of
      * the default representations:
      *

@@ -286,6 +286,94 @@ describe("numbers", function () {
   });
 });
 
+describe("integer range", function () {
+  it("parses integers at the edge of the safe range", function () {
+    parsesToml("a = 9007199254740991\nb = -9007199254740991", {
+      a: Number.MAX_SAFE_INTEGER,
+      b: Number.MIN_SAFE_INTEGER,
+    });
+  });
+
+  it("rejects integers beyond the safe range by default", function () {
+    assert.throws(function () {
+      toml.parse("a = 9007199254740993");
+    }, /cannot be represented losslessly.*bigint/s);
+    assert.throws(function () {
+      toml.parse("a = -9007199254740993");
+    }, /cannot be represented losslessly.*bigint/s);
+  });
+
+  it("reports the position of out-of-range integers", function () {
+    try {
+      toml.parse("a = 1\nb = 2\nc = 9223372036854775807");
+      assert.fail("expected parse error");
+    } catch (e) {
+      assert.strictEqual(e.line, 3);
+      assert.strictEqual(e.column, 5);
+    }
+  });
+
+  it("rejects integers outside the int64 range in both modes", function () {
+    assert.throws(function () {
+      toml.parse("a = 9223372036854775808");
+    }, /64-bit signed integer range/);
+    assert.throws(function () {
+      toml.parse("a = 9223372036854775808", { bigint: true });
+    }, /64-bit signed integer range/);
+    assert.throws(function () {
+      toml.parse("a = -9223372036854775809", { bigint: true });
+    }, /64-bit signed integer range/);
+    assert.throws(function () {
+      toml.parse("a = 0xffff_ffff_ffff_ffff", { bigint: true });
+    }, /64-bit signed integer range/);
+  });
+
+  it("large-magnitude floats are unaffected", function () {
+    parsesToml("a = 9007199254740993.0\nb = 1e300", {
+      a: 9007199254740992,
+      b: 1e300,
+    });
+  });
+});
+
+describe("bigint mode", function () {
+  it("returns all integers as BigInt", function () {
+    var result = toml.parse("a = 42\nb = -17\nc = 0x10\nd = 0o755\ne = 0b101", {
+      bigint: true,
+    });
+    assert.deepStrictEqual(normalize(result), {
+      a: 42n,
+      b: -17n,
+      c: 16n,
+      d: 493n,
+      e: 5n,
+    });
+  });
+
+  it("preserves the full int64 range exactly", function () {
+    var result = toml.parse(
+      "max = 9223372036854775807\nmin = -9223372036854775808",
+      { bigint: true }
+    );
+    assert.strictEqual(result.max, 9223372036854775807n);
+    assert.strictEqual(result.min, -9223372036854775808n);
+  });
+
+  it("converts integers inside arrays and inline tables", function () {
+    var result = toml.parse("a = [1, 2]\nb = { c = 9223372036854775807 }", {
+      bigint: true,
+    });
+    assert.deepStrictEqual(normalize(result.a), [1n, 2n]);
+    assert.strictEqual(result.b.c, 9223372036854775807n);
+  });
+
+  it("leaves floats as numbers", function () {
+    var result = toml.parse("a = 3.0\nb = 5e22", { bigint: true });
+    assert.strictEqual(result.a, 3.0);
+    assert.strictEqual(result.b, 5e22);
+  });
+});
+
 describe("whitespace", function () {
   it("handles whitespace", function () {
     parsesToml("a = 1\n  \n  b = 2  ", { a: 1, b: 2 });
