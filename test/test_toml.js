@@ -313,6 +313,58 @@ describe("integer range", function () {
     }
   });
 
+  it("ignores leading zeros in prefixed literals", function () {
+    parsesToml(
+      "a = 0x" + "0".repeat(40) + "ff\n" +
+      "b = 0o" + "0".repeat(40) + "17\n" +
+      "c = 0b" + "0".repeat(80) + "101\n" +
+      "d = 0x0_0_0_ff",
+      { a: 255, b: 15, c: 5, d: 255 }
+    );
+  });
+
+  it("accepts the int64 extremes in every base", function () {
+    var result = toml.parse(
+      "a = 0x7fff_ffff_ffff_ffff\n" +
+      "b = 0o7_7777_7777_7777_7777_7777\n" +
+      "c = 0b" + "1".repeat(63) + "\n" +
+      "d = 9223372036854775807\n" +
+      "e = -9223372036854775808",
+      { bigint: true }
+    );
+    assert.strictEqual(result.a, 2n ** 63n - 1n);
+    assert.strictEqual(result.b, 2n ** 63n - 1n);
+    assert.strictEqual(result.c, 2n ** 63n - 1n);
+    assert.strictEqual(result.d, 2n ** 63n - 1n);
+    assert.strictEqual(result.e, -(2n ** 63n));
+  });
+
+  it("rejects literals just past the int64 range in every base", function () {
+    [
+      "0x8000_0000_0000_0000",
+      "0x1_0000_0000_0000_0000",
+      "0o1" + "0".repeat(21),
+      "0b1" + "0".repeat(63),
+      "9223372036854775808",
+      "1" + "0".repeat(19),
+      "-9223372036854775809",
+    ].forEach(function (literal) {
+      assert.throws(function () {
+        toml.parse("a = " + literal, { bigint: true });
+      }, /64-bit signed integer range/, literal);
+    });
+  });
+
+  it("reports the position of oversized integer literals", function () {
+    try {
+      toml.parse("a = 1\nb = " + "9".repeat(100));
+      assert.fail("expected parse error");
+    } catch (e) {
+      assert.strictEqual(e.line, 2);
+      assert.strictEqual(e.column, 5);
+    }
+  });
+
   it("rejects integers outside the int64 range in both modes", function () {
     assert.throws(function () {
       toml.parse("a = 9223372036854775808");
@@ -715,6 +767,95 @@ describe("nesting depth limit (GHSA-82x6-q7mm-w9cf)", function () {
   });
 });
 
+describe("key path identity", function () {
+  // `"a.b"` and `'"a'.'b"'` are different key paths that render to the same
+  // string; bookkeeping must not conflate them.
+  it("keeps keys distinct when their rendered paths collide", function () {
+    parsesToml("\"a.b\" = 1\n'\"a'.'b\"' = 2", { "a.b": 1, '"a': { 'b"': 2 } });
+  });
+
+  it("does not let a quoted key block a header that merely renders alike", function () {
+    parsesToml("'\"a'.'b\"' = 1\n[\"a.b\"]\nc = 2", {
+      '"a': { 'b"': 1 },
+      "a.b": { c: 2 },
+    });
+  });
+
+  it("does not let an array-of-tables header unlock a value that renders alike", function () {
+    assert.throws(function () {
+      toml.parse("\"b.c\" = 1\n[['\"b']]\n[\"b.c\"]");
+    }, /Cannot redefine/);
+  });
+});
+
+describe("resource exhaustion", function () {
+  // Each of these inputs is linear work for the parser and compiler; the
+  // limit is generous so slow CI machines pass while the quadratic
+  // behaviour these guard against (tens of seconds) still fails.
+  var LIMIT_MS = 2000;
+  var SEGMENTS = 50000;
+  var longKey = "a.".repeat(SEGMENTS) + "z";
+
+  function assertFast(label, fn) {
+    var start = process.hrtime.bigint();
+    fn();
+    var ms = Number(process.hrtime.bigint() - start) / 1e6;
+    assert.ok(ms < LIMIT_MS, label + " took " + Math.round(ms) + "ms (limit " + LIMIT_MS + "ms)");
+  }
+
+  it("parses very long dotted keys in linear time (GHSA-9j65-hcg3-gc64)", function () {
+    assertFast("dotted key", function () {
+      toml.parse(longKey + " = 1");
+    });
+    assertFast("table header", function () {
+      toml.parse("[" + longKey + "]\nx = 1");
+    });
+    assertFast("array-of-tables header", function () {
+      toml.parse("[[" + longKey + "]]\nx = 1");
+    });
+    assertFast("inline table key", function () {
+      toml.parse("t = { " + longKey + " = 1 }");
+    });
+  });
+
+  it("reports errors on very long dotted keys in linear time", function () {
+    assertFast("redefinition", function () {
+      assert.throws(function () {
+        toml.parse(longKey + " = 1\n" + longKey + " = 2");
+      }, /Cannot redefine/);
+    });
+  });
+
+  it("parses many array-of-tables headers in linear time (GHSA-4qx8-w7c3-pj3p)", function () {
+    var doc = "";
+    for (var i = 0; i < 30000; i++) doc += "[[t" + i + "]]\nv = 1\n";
+    assertFast("array-of-tables headers", function () {
+      toml.parse(doc);
+    });
+  });
+
+  // BigInt conversion cost depends on the engine, so timing can't reliably
+  // show the guard; instead confirm oversized literals never reach BigInt.
+  it("rejects oversized integer literals without converting them (GHSA-9qmh-m7c6-f92p)", function () {
+    var realBigInt = global.BigInt;
+    global.BigInt = function (value) {
+      if (String(value).length > 100) {
+        throw new Error("BigInt called on an oversized literal: " + String(value).length + " chars");
+      }
+      return realBigInt(value);
+    };
+    try {
+      ["0x" + "f".repeat(10000), "0o" + "7".repeat(10000), "0b" + "1".repeat(10000), "9".repeat(10000)].forEach(function (literal) {
+        assert.throws(function () {
+          toml.parse("x = " + literal);
+        }, /64-bit signed integer range/);
+      });
+    } finally {
+      global.BigInt = realBigInt;
+    }
+  });
+});
+
 describe("prototype pollution hardening", function () {
   it("rejects table paths that descend through scalar values", function () {
     rejectsWithoutObjectPrototypeMutation(
@@ -734,6 +875,23 @@ describe("prototype pollution hardening", function () {
     rejectsWithoutObjectPrototypeMutation(
       "[a.b]\ny = 1\n[a.b.y.__proto__.__proto__.code]\nval = \"arbitrary\"",
       "code"
+    );
+  });
+
+  it("rejects dotted keys that descend through a date value", function () {
+    rejectsWithoutObjectPrototypeMutation(
+      "a = 1979-05-27T07:32:00Z\na.__proto__.__proto__.polluted = \"yes\"",
+      "polluted"
+    );
+  });
+
+  it("rejects descent into a date reached via colliding path strings (GHSA-h895-cgqg-jf52)", function () {
+    rejectsWithoutObjectPrototypeMutation(
+      "\"b.c\" = 1979-05-27T07:32:00Z\n" +
+      "[['\"b']]\n" +
+      "[\"b.c\"]\n" +
+      "__proto__.__proto__.polluted = \"yes\"",
+      "polluted"
     );
   });
 
