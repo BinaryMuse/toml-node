@@ -83,6 +83,22 @@
     return str.indexOf('_') === -1 ? str : str.replace(/_/g, '');
   }
 
+  // Digits in the largest int64 magnitude for each base. BigInt conversion
+  // is super-linear in digit count, so a literal that cannot fit is rejected
+  // by length before converting (GHSA-9qmh-m7c6-f92p); the compiler still
+  // performs the exact range check on what gets through.
+  var MAX_INT64_DIGITS = { 2: 63, 8: 21, 10: 19, 16: 16 };
+  var RADIX_PREFIX = { 2: '0b', 8: '0o', 10: '', 16: '0x' };
+
+  function integerNode(radix, text, off) {
+    var digits = stripUnderscores(text);
+    var significant = digits.replace(/^[+-]?0*/, '');
+    if (significant.length > MAX_INT64_DIGITS[radix]) {
+      genError("Integer literal is outside the 64-bit signed integer range required by TOML.", off);
+    }
+    return node('Integer', BigInt(RADIX_PREFIX[radix] + digits), off);
+  }
+
   function convertCodePoint(str) {
     var num = parseInt(str, 16);
 
@@ -257,10 +273,10 @@ float_exp_text
 // Integer values are BigInt so the full 64-bit range survives parsing;
 // the compiler converts to Number (or errors) based on options.
 integer
-  = '0x' digits:$HEX_DIGIT_SEQ                               { return node('Integer', BigInt('0x' + stripUnderscores(digits)), offset()) }
-  / '0o' digits:$OCT_DIGIT_SEQ                                { return node('Integer', BigInt('0o' + stripUnderscores(digits)), offset()) }
-  / '0b' digits:$BIN_DIGIT_SEQ                                { return node('Integer', BigInt('0b' + stripUnderscores(digits)), offset()) }
-  / text:dec_integer_text                              { return node('Integer', BigInt(stripUnderscores(text)), offset()) }
+  = '0x' digits:$HEX_DIGIT_SEQ                         { return integerNode(16, digits, offset()) }
+  / '0o' digits:$OCT_DIGIT_SEQ                         { return integerNode(8, digits, offset()) }
+  / '0b' digits:$BIN_DIGIT_SEQ                         { return integerNode(2, digits, offset()) }
+  / text:dec_integer_text                              { return integerNode(10, text, offset()) }
 
 dec_integer_text
   = sign:[+-]? '0' !([0-9_]) !'.'                     { return (sign || '') + '0' }
