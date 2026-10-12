@@ -1,3 +1,12 @@
+5.0.1 - October 12 2026
+=======================
+
+* Address four security advisories, each reachable by parsing untrusted input:
+  * [`GHSA-h895-cgqg-jf52`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-h895-cgqg-jf52), in which a crafted document could still write to `Object.prototype`. Two distinct key paths could render to the same bookkeeping string, letting an array-of-tables header clear the guard on an unrelated key, after which a dotted key could descend through a date value into its prototype chain. The compiler now records how each table was defined on the table itself rather than in string-keyed sets, so paths cannot collide and key paths can only descend through tables the compiler created.
+  * [`GHSA-9j65-hcg3-gc64`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-9j65-hcg3-gc64), in which dotted keys, table headers, and inline-table keys with many segments took quadratic time to resolve.
+  * [`GHSA-4qx8-w7c3-pj3p`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-4qx8-w7c3-pj3p), in which every array-of-tables header rescanned all paths defined so far, so documents with many such headers took quadratic time.
+  * [`GHSA-9qmh-m7c6-f92p`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-9qmh-m7c6-f92p), in which integer literals were converted to `BigInt` before any size check, so a multi-megabyte literal consumed super-linear CPU time before being rejected. Literals with more digits than any 64-bit integer are now rejected before conversion.
+
 5.0.0 - July 14 2026
 =====================
 
