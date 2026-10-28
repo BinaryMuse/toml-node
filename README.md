@@ -5,6 +5,13 @@ TOML Parser for Node.js
 
 If you haven't heard of TOML, well you're just missing out. [Go check it out now.](https://toml.io) Back? Good.
 
+- [TOML Spec Support](#toml-spec-support)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Security](#security)
+- [Implementation Notes](#implementation-notes)
+- [Building and Testing](#building-and-testing)
+
 TOML Spec Support
 -----------------
 
@@ -59,13 +66,47 @@ try {
 }
 ```
 
+To `require()` `.toml` files directly, see [toml-require](https://github.com/BinaryMuse/toml-require).
+
+Security
+--------
+
+toml-node is built to parse untrusted input safely:
+
+- Every table in the result is created with `Object.create(null)`, so keys like `__proto__` or `constructor` become plain own properties and can never reach `Object.prototype`.
+- Parse time grows linearly with input size. Integer literals are rejected by length before any `BigInt` conversion, and dotted keys, table headers, and arrays of tables resolve without rescanning earlier input.
+- Malformed input of any kind throws an ordinary `Error`; the parser never crashes the process.
+
+Even so, the best defense is to cap the size of documents you accept before they reach the parser.
+
+Past advisories and their fixes are listed in the [changelog](CHANGELOG.md) and on the [security advisories page](https://github.com/BinaryMuse/toml-node/security/advisories). To report a vulnerability, [open a private advisory](https://github.com/BinaryMuse/toml-node/security/advisories/new) rather than a public issue.
+
 ### Nesting Depth Limit
 
-To guard against stack overflow on maliciously deep input, arrays and inline tables may nest at most 500 levels deep by default; input past the limit throws a normal parse error. Adjust the limit with the `maxDepth` option:
+Arrays and inline tables may nest at most 500 levels deep by default. Nesting depth maps directly onto call-stack depth, so without a limit a deep enough document would overflow the stack and crash the process with an uncatchable `RangeError`. Input past the limit throws a normal parse error. Adjust the limit with the `maxDepth` option:
 
 ```javascript
 toml.parse(someTomlString, { maxDepth: 100 });
 ```
+
+Raising the limit far above the default brings the stack overflow back, so only do so for input you trust.
+
+### Tables Have No Prototype
+
+Because tables are null-prototype objects, methods inherited from `Object.prototype` are not available on them. Use the static forms instead:
+
+```javascript
+const data = toml.parse('[server]\nport = 80');
+
+data.server.hasOwnProperty('port');                        // TypeError
+Object.hasOwn(data.server, 'port');                        // true
+Object.prototype.hasOwnProperty.call(data.server, 'port'); // true
+```
+
+Everything else works as usual: property access, `Object.keys`, spreading, and `JSON.stringify` all behave as they would on a plain object.
+
+Implementation Notes
+--------------------
 
 ### Integer Range and BigInt
 
@@ -108,9 +149,7 @@ typeof data.lt             // "string"
 
 #### Temporal Support
 
-Pass `useTemporal: true` to have date/time values returned as
-[Temporal](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Temporal)
-objects instead:
+Pass `useTemporal: true` to have date/time values returned as [Temporal](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Temporal) objects instead:
 
 | TOML type        | Returned as               |
 | ---------------- | ------------------------- |
@@ -133,24 +172,16 @@ data.ld.toString()   // "1979-05-27"
 data.lt.toString()   // "07:32:00"
 ```
 
-Offset date-times become `Temporal.ZonedDateTime` values whose time zone is
-the original UTC offset (`Z` maps to the `UTC` time zone), so the offset
-written in the TOML document is preserved — unlike the default `Date`
-representation, which loses it. Fractional seconds beyond nanosecond
-precision are truncated, as permitted by the TOML spec.
+Offset date-times become `Temporal.ZonedDateTime` values whose time zone is the original UTC offset (`Z` maps to the `UTC` time zone), so the offset written in the TOML document is preserved — unlike the default `Date` representation, which loses it. Fractional seconds beyond nanosecond precision are truncated, as permitted by the TOML spec.
 
-`useTemporal` requires a runtime with the `Temporal` global. On runtimes
-that don't provide it yet, pass an implementation such as
-[`@js-temporal/polyfill`](https://www.npmjs.com/package/@js-temporal/polyfill)
-via the `temporal` option:
+`useTemporal` requires a runtime with the `Temporal` global. On runtimes that don't provide it yet, pass an implementation such as [`@js-temporal/polyfill`](https://www.npmjs.com/package/@js-temporal/polyfill) via the `temporal` option:
 
 ```javascript
 const { Temporal } = require('@js-temporal/polyfill');
 const data = toml.parse(someTomlString, { useTemporal: true, temporal: Temporal });
 ```
 
-Once `Temporal` is broadly available, Temporal output is expected to become
-the default behavior in a future major version.
+Once `Temporal` is broadly available, Temporal output is expected to become the default behavior in a future major version.
 
 ### Special Float Values
 
@@ -168,12 +199,8 @@ data.neg_inf === -Infinity  // true
 Number.isNaN(data.not_a_number) // true
 ```
 
-### Requiring .toml Files
-
-You can use the [toml-require package](https://github.com/BinaryMuse/toml-require) to `require()` your `.toml` files with Node.js.
-
-Building & Testing
-------------------
+Building and Testing
+--------------------
 
 toml-node uses the [Peggy parser generator](https://peggyjs.org/) (successor to PEG.js).
 

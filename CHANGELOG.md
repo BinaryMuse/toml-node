@@ -2,10 +2,10 @@
 =======================
 
 * Address four security advisories, each reachable by parsing untrusted input:
-  * [`GHSA-h895-cgqg-jf52`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-h895-cgqg-jf52), in which a crafted document could still write to `Object.prototype`. Two distinct key paths could render to the same bookkeeping string, letting an array-of-tables header clear the guard on an unrelated key, after which a dotted key could descend through a date value into its prototype chain. The compiler now records how each table was defined on the table itself rather than in string-keyed sets, so paths cannot collide and key paths can only descend through tables the compiler created.
-  * [`GHSA-9j65-hcg3-gc64`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-9j65-hcg3-gc64), in which dotted keys, table headers, and inline-table keys with many segments took quadratic time to resolve.
-  * [`GHSA-4qx8-w7c3-pj3p`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-4qx8-w7c3-pj3p), in which every array-of-tables header rescanned all paths defined so far, so documents with many such headers took quadratic time.
-  * [`GHSA-9qmh-m7c6-f92p`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-9qmh-m7c6-f92p), in which integer literals were converted to `BigInt` before any size check, so a multi-megabyte literal consumed super-linear CPU time before being rejected. Literals with more digits than any 64-bit integer are now rejected before conversion.
+  * [CVE-2026-114142](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-h895-cgqg-jf52), in which a crafted document could still write to `Object.prototype`. Two distinct key paths could render to the same bookkeeping string, letting an array-of-tables header clear the guard on an unrelated key, after which a dotted key could descend through a date value into its prototype chain. The compiler now records how each table was defined on the table itself rather than in string-keyed sets, so paths cannot collide and key paths can only descend through tables the compiler created.
+  * [CVE-2026-114143](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-9j65-hcg3-gc64), in which dotted keys, table headers, and inline-table keys with many segments took quadratic time to resolve.
+  * [CVE-2026-114141](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-4qx8-w7c3-pj3p), in which every array-of-tables header rescanned all paths defined so far, so documents with many such headers took quadratic time.
+  * [CVE-2026-114144](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-9qmh-m7c6-f92p), in which integer literals were converted to `BigInt` before any size check, so a multi-megabyte literal consumed super-linear CPU time before being rejected. Literals with more digits than any 64-bit integer are now rejected before conversion.
 
 5.0.0 - July 14 2026
 =====================
@@ -21,7 +21,7 @@
 4.2.0 - July 13 2026
 =====================
 
-* Address [security advisory `GHSA-82x6-q7mm-w9cf`](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-82x6-q7mm-w9cf) (CVE pending), in which deeply nested arrays or inline tables could overflow the call stack and crash the process with an uncatchable `RangeError`. Nesting is now bounded (default 500 levels), and input past the limit throws a normal parse error. The limit is configurable via `toml.parse(input, { maxDepth })`.
+* Address [CVE-2026-77465](https://github.com/BinaryMuse/toml-node/security/advisories/GHSA-82x6-q7mm-w9cf), in which deeply nested arrays or inline tables could overflow the call stack and crash the process with an uncatchable `RangeError`. Nesting is now bounded (default 500 levels), and input past the limit throws a normal parse error. The limit is configurable via `toml.parse(input, { maxDepth })`.
 
 4.1.2 - June 30 2026
 =====================
